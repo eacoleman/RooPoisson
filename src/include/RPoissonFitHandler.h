@@ -8,6 +8,6 @@ class RPoissonFitHandler
     public:
         RPoissonFitHandler();
         
-}
+};
 
 #endif

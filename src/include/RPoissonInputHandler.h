@@ -8,6 +8,6 @@ class RPoissonInputHandler
     public:
         RPoissonInputHandler();
         
-}
+};
 
 #endif

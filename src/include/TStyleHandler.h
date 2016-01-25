@@ -72,6 +72,6 @@ class TStyleHandler
     public:
         static void setStyle(TPad *pad, int iPeriod, int iPosX);
 
-}
+};
 
 #endif

@@ -10,7 +10,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "include/TStyleHandler.h"
-#include "include/TCanvas.h"
+#include "TCanvas.h"
 
 TStyleHandler::TStyleHandler() {
 }
