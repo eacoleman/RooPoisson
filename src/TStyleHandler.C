@@ -4,7 +4,7 @@
  *         2015                                                                *
  *                                                                             *
  * Purpose:                                                                    *
- *   Handles all style issues for this application. Includes standard          *
+ *   Handles all style formatting. Includes standard                           *
  *   definitions for CMS_lumi and tdrStyle.                                    *
  *                                                                             *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */

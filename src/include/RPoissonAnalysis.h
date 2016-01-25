@@ -19,7 +19,6 @@
 #include "TGraph.h"
 #include "TGraphErrors.h"
 #include "TString.h"
-#include "TRandom3.h"
 #include <TSystem.h>
 #include <TLatex.h>
 #include <TROOT.h>
@@ -42,25 +41,30 @@
 
 class RPoissonAnalysis
 {
+    friend class RPoissonFitHandler;
+
     private:
         /////////////
         // Methods //
         /////////////
-         
-        
         TH1F* getTemplHisto(string process, int iProp);
         TH1F* getBkgHisto(string process);
+
+        void typeTag(char* nameToTag);
 
         void doToys(int nExp, int iTemplate);
 
         void setOverflowBins(TH1F*);
 
+        void assembleDatasets();
+
         ///////////////////////
-        // Control variables //
-        //////////////////////
+        // Utility variables //
+        ///////////////////////
         
         //
         RPoissonFitHandler *fitHandler;
+        TCanvas *c_min;
         
         //
         vector<int> nTotSample;
