@@ -14,6 +14,8 @@
 
 class RPoissonFitHandler
 {
+    friend class RPoissonAnalysis
+    
     private:
         /////////////
         // Methods //

@@ -58,6 +58,7 @@ class RPoissonAnalysis
 
         void assembleDatasets();
 
+
         ///////////////////////
         // Utility variables //
         ///////////////////////
@@ -81,6 +82,7 @@ class RPoissonAnalysis
         float fitMass,
               calMass;
 
+
         /////////////////////////
         // Data and histograms //
         /////////////////////////
@@ -93,7 +95,6 @@ class RPoissonAnalysis
                             mcTotalBkgHistosScaled_gen,
                             mcSigTemplHistosScaled,
                             mcSigTemplHistosScaled_gen;
-
       
         TH1F *dataHisto,
              *chi2Result,
@@ -154,6 +155,7 @@ class RPoissonAnalysis
         void run(char* dataFileName);
         void save(char* outFileName);
 
+
         ////////////
         // Labels //
         ////////////
@@ -170,7 +172,8 @@ class RPoissonAnalysis
         // labels for subprocesses, background processes
         vector<string> processes;
         vector<TString> mcBkgLabels;
-        
+
+
         ///////////////////////////////////
         // Variables to control settings //
         ///////////////////////////////////
