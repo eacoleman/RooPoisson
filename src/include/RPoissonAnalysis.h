@@ -37,11 +37,11 @@
 #include "RooSimultaneous.h"
 
 // RooPoisson inclusion
-#include "RPoissonFitHandler.h"
+//#include "RPoissonFitHandler.h"
 
 class RPoissonAnalysis
 {
-    friend class RPoissonFitHandler;
+    //friend class RPoissonFitHandler;
 
     private:
         /////////////
@@ -58,6 +58,14 @@ class RPoissonAnalysis
 
         void assembleDatasets();
 
+        // Fitting (TODO: Migrate to RPoissonFitHandler)
+        double fitPoint(int index);
+        int    fitAll();
+        pair<double, double> minimize(bool fake, 
+                                      bool all = true,
+                                      int  pointsToUse = 2);
+
+        void runCalibration(int numberOfExps = 1000);
 
         ///////////////////////
         // Utility variables //
@@ -79,9 +87,11 @@ class RPoissonAnalysis
         int fittedTempl;        
 
         //
-        float fitMass,
-              calMass;
+        float fitVal,
+              calVal;
 
+        // fitting
+        TRandom3 _random;
 
         /////////////////////////
         // Data and histograms //
