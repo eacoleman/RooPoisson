@@ -12,7 +12,7 @@
 RPoissonAnalysis::RPoissonAnalysis() {
 
     //
-    TStyleHandler()->setTDRStyle();
+    TStyleHandler::setTDRStyle();
 
     int W = 800;                                                                                    //HARDCODED
     int H = 600;                                                                                    //HARDCODED
@@ -63,7 +63,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
     char evHistoName[15]   = "h_nEvents";
 
     //
-    propVal = new RooRealVar(sProp.c_str(), strcat("Reconstructed ", sProp.c_str()),
+    propVal = new RooRealVar(sProp.c_str(), strcat(*(new char[14]("Reconstructed ")), sProp.c_str()),
                              lowerCut, upperCut);
     sample  = new RooCategory("sample", "sample") ;
 
@@ -426,7 +426,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
     }
 
     if (bkgsyst) {
-        bkgMean     = new RooRealVar("bkgmean" , strcat("bkg ", sProp.c_str()), 180.);
+        bkgMean     = new RooRealVar("bkgmean" , strcat(*(new char[4]("bkg ")), sProp.c_str()), 180.);
         bkgWidth    = new RooRealVar("bkgwidth", "bkg fit width", 20.);
         bkgHistoPDF = new RooGaussian("background", "background PDF",
                                       *propVal,*bkgMean,*bkgWidth);
@@ -446,7 +446,7 @@ RPoissonAnalysis::~RPoissonAnalysis() {
 TH1F* RPoissonAnalysis::getTemplHisto(string process, int iProp) {
     //
     char tag[50];
-    sprintf(tag,"%s%.2f", process.data(), mcSigTemplVal.at(i));
+    sprintf(tag,"%s%.2f", process.data(), mcSigTemplVal.at(iProp));
 
     //
     cout << "Template " << sProp << ": " << tag << endl;
@@ -471,7 +471,7 @@ void RPoissonAnalysis::typeTag(char* nameToTag) {
         else sprintf(nameToTag,"%s", tName);
     }
 
-    cout << " - New name is: " nameToTag << endl;
+    cout << " - New name is: " << nameToTag << endl;
 }
 
 
@@ -498,9 +498,9 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
 
     // initialize new toy histograms 
     toyMean   = new TH1F("mean"  ,sProp.c_str(),100, minPropVal, maxPropVal);                       //HARDCODED
-    toyBias   = new TH1F("bias"  ,strcat(sProp.c_str(), "bias"),100, -3.5, 3.5);                    //HARDCODED
+    toyBias   = new TH1F("bias"  ,strcat(sProp.c_str(), *(new char[4]("bias"))),100, -3.5, 3.5);                    //HARDCODED
     toyPull   = new TH1F("pull"  ,"pull",200, -10, 10);                                             //HARDCODED
-    toyError  = new TH1F("error" ,strcat(sProp.c_str(), "uncertainty"), 500, 0, 0.4);               //HARDCODED
+    toyError  = new TH1F("error" ,strcat(sProp.c_str(), *(new char[11]("uncertainty"))), 500, 0, 0.4);               //HARDCODED
     toyLL     = new TH2F("LL"  ,"LL residuals",9, -0.5, 8.5,200,-100,100);                          //HARDCODED
 
     // histogram styling
@@ -518,7 +518,7 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
         int countFailures = 0;
         do {
             // get the result of the experiment
-            do { j = generate_toy(iTemplate);} while (j==0);
+            do { j = generateToy(iTemplate);} while (j==0);
 
             stat = fitAll();
             if (stat !=0) {
@@ -535,7 +535,7 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
 
         nFitFailed += countFailures;
 
-        pair<double,double> result = fitHandler->minFake();
+        pair<double,double> result = minimize(true);
         if (result.second >= 0.) {
             cout << " - fake fit result: " << result.first 
                  << " +/- " << result.second << endl;
@@ -563,13 +563,13 @@ void RPoissonAnalysis::setOverflowBins(TH1F* histo) {
     Int_t n_entries = (Int_t) histo->GetEntries();
 
     //
-    h->AddBinContent(1,histo->GetBinContent(0));
-    h->AddBinContent(_last_bin,_overflow);
+    histo->AddBinContent(1,histo->GetBinContent(0));
+    histo->AddBinContent(_last_bin,_overflow);
 
     //
-    h->SetBinContent(0,0);
-    h->SetBinContent(_last_bin+1,0);
-    h->SetEntries(n_entries);
+    histo->SetBinContent(0,0);
+    histo->SetBinContent(_last_bin+1,0);
+    histo->SetEntries(n_entries);
 }
 
 
@@ -585,7 +585,7 @@ void RPoissonAnalysis::assembleDatasets() {
         sprintf(tName, "%s", processes.at(itype).c_str());
 
         cout << " - process type " << tName
-             << " has mean value " << datasets[tName]->GetMean()) << endl;
+             << " has mean value " << datasets[tName]->GetMean() << endl;
 
         mapToImport[tName] = datasets[tName];
     }

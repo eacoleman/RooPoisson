@@ -72,7 +72,7 @@ class RPoissonAnalysis
         ///////////////////////
         
         //
-        RPoissonFitHandler *fitHandler;
+        //RPoissonFitHandler *fitHandler;
         TCanvas *c_min;
         
         //
@@ -114,8 +114,9 @@ class RPoissonAnalysis
              *toyMean,
              *toyBias,
              *toyError,
-             *toyPull,
-             *toyLL;
+             *toyPull;
+        TH2F *toyLL;
+             
 
         TH1F *templMean,
              *templRMS;
