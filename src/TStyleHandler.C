@@ -13,15 +13,11 @@
 #include "TCanvas.h"
 
 
-TStyleHandler::TStyleHandler() {
-}
-
-
 void TStyleHandler::CMS_lumi(TPad *pad, int iPeriod, int iPosX) {
-    if( iPosX/10==0 ) 
-    {
-        outOfFrame = true;
-    }
+    //if( iPosX/10==0 ) 
+    //{
+    //    outOfFrame = true;
+    //}
 
     int alignY_=3;
     int alignX_=2;
