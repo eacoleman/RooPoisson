@@ -52,6 +52,7 @@ class RPoissonAnalysis
 
         void typeTag(char* nameToTag);
 
+        int  generateToy(int templToUse);
         void doToys(int nExp, int iTemplate);
 
         void setOverflowBins(TH1F*);
@@ -92,6 +93,9 @@ class RPoissonAnalysis
 
         // fitting
         TRandom3 _random;
+
+        //
+        bool bkgsyst = false;
 
         /////////////////////////
         // Data and histograms //

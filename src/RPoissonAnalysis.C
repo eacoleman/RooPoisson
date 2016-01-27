@@ -8,6 +8,7 @@
 #include "include/RPoissonAnalysis.h"
 #include "TStyleHandler.C"
 
+using namespace RooFit;
 
 RPoissonAnalysis::RPoissonAnalysis() {
 
@@ -52,10 +53,6 @@ RPoissonAnalysis::RPoissonAnalysis() {
     hFitFailed     = new TH1F("hFitFailed","hFitFailed", 11, minPropVal, maxPropVal);               //HARDCODED
     hFitFailedDiff = new TH1F("hFitFailedDiff","hFitFailedDiff", 60, -30., 30.);                    //HARDCODED
     fittedTempl    = -1;
-
-    // initialize settings
-    bool drawSwitch = false;
-    bool bkgsyst    = false;
 
     //
     char dataHistoName[20] = "PeakMassTree_";
@@ -438,10 +435,6 @@ RPoissonAnalysis::RPoissonAnalysis() {
 
 }
 
-RPoissonAnalysis::~RPoissonAnalysis() {
-
-}
-
 
 TH1F* RPoissonAnalysis::getTemplHisto(string process, int iProp) {
     //
@@ -679,7 +672,7 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
     double minLL = std::numeric_limits<double>::infinity();
 
     //
-    for (int i = minTemplate; i!=maxTemplate;++i) {
+    for (int i = 0; i < mcSigTemplVal.size(); ++i) {
         if (chiSquared.at(i) >= 0) {
             ++pts;
             chiSquared.assign(i, min(chiSquared.at(i), minLL));
@@ -722,8 +715,8 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
         points = 2 * pointsToUse + 1;
         
         if (minPt < pointsToUse) minPt = pointsToUse;
-        if (minPt > maxTemplate - pointsToUse - 1) minPt = maxTemplate
-                                                            - pointsToUse - 1;
+        if (minPt > mcSigTemplVal.size() - pointsToUse - 1) 
+            minPt = mcSigTemplVal.size() - pointsToUse - 1;
         min = minPt - pointsToUse;
         max = minPt + pointsToUse;
     }
@@ -799,7 +792,7 @@ void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
 
     // set the name of the outfile (TODO: abstract)
     TString name = TString("calibration_");
-    name += ilumi;
+    name += lLumi;
     name.ReplaceAll ( " " , "" );
     cout << name << endl;
 
@@ -810,7 +803,7 @@ void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
     // loop over templates
     for (i = min; i < max; ++i) {
         // get the toy statistics and fit them with a gaussian
-        doToys(number, i);
+        doToys(numberOfExps, i);
         toyMean->Fit("gaus");
 
         // store the points for bias plot
@@ -819,7 +812,7 @@ void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
 
         // store the point errors for bias plot
         ex[pts] = 0.;
-        ey[pts] = toyMean->GetFunction("gaus")->GetParameter(2)/sqrt(number);
+        ey[pts] = toyMean->GetFunction("gaus")->GetParameter(2)/sqrt(numberOfExps);
 
         ++pts;
 
@@ -882,7 +875,7 @@ void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
     time(&end);
     double dif = difftime(end, start);
     printf(" - it took  %.2lf seconds to do the whole thing, %.2lf per loop.\n", 
-            dif , dif/number);
+            dif , dif/numberOfExps);
 }
 
 void RPoissonAnalysis::run() {
