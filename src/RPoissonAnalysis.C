@@ -63,13 +63,13 @@ RPoissonAnalysis::RPoissonAnalysis() {
     char evHistoName[15]   = "h_nEvents";
 
     //
-    propVal = new RooRealVar(sProp, "Reconstructed " + sProp,
+    propVal = new RooRealVar(sProp.c_str(), "Reconstructed " + sProp.c_str(),
                              lowerCut, upperCut);
     sample  = new RooCategory("sample", "sample") ;
 
     //set types of sample
     for (int itype = 0; itype < processes.size(); ++itype) 
-        sample->defineType(processes.at(itype)); 
+        sample->defineType(processes.at(itype).c_str()); 
 
     //
     char  name[300], 
@@ -85,8 +85,8 @@ RPoissonAnalysis::RPoissonAnalysis() {
     theFile = new TFile (dataFileLoc.c_str());
     for (int ihisto = 0; ihisto < processes.size(); ++ihisto) {
         // get the data histograms
-        sprintf(sname, "%s"        , processes.at(ihisto));
-        sprintf(hname, "%s_Data_%s", histoName, processes.at(ihisto));
+        sprintf(sname, "%s"        , processes.at(ihisto).c_str());
+        sprintf(hname, "%s_Data_%s", histoName, processes.at(ihisto).c_str());
         cout << hname << endl;
 
         datasets[sname] = (TH1F*) gDirectory->Get(hname);
@@ -132,8 +132,8 @@ RPoissonAnalysis::RPoissonAnalysis() {
         for (unsigned int iVal = 0; iVal <  mcSigTemplVal.size(); ++iVal) {
 
             // get the histogram for the interaction and propVal we want
-            sprintf(hname, "mlbwa__TTbar_%.2f_%s", mcSigTemplVal.at(iVal), processes.at(itype));
-            sprintf(tag  , "%s%.2f"              , processes.at(itype).Data()   , mcSigTemplVal.at(iVal));
+            sprintf(hname, "mlbwa__TTbar_%.2f_%s", mcSigTemplVal.at(iVal), processes.at(itype).c_str());
+            sprintf(tag  , "%s%.2f"              , processes.at(itype).c_str()   , mcSigTemplVal.at(iVal));
             cout << " - signal template: " << hname << " " << tag << endl;
 
             printf("itype %d iVal %d \n", itype, iVal);
@@ -176,11 +176,11 @@ RPoissonAnalysis::RPoissonAnalysis() {
             for (int itype = 0;itype!=maxType;++itype) {
                 // get the histogram name
                 if (systematicsPDF) {
-                    sprintf(tag,"%s_pdf%i",processes.at(itype),i);
-                    sprintf(hname,"%s_%s_pdf%i", histoName, processes.at(itype),i);
+                    sprintf(tag,"%s_pdf%i",processes.at(itype).c_str(),i);
+                    sprintf(hname,"%s_%s_pdf%i", histoName, processes.at(itype).c_str(),i);
                 } else {
-                    sprintf(tag,"%s%.2f",processes.at(itype),tVal);
-                    sprintf(hname, "mlbwa__TTbar_%.2f_%s",tVal, processes.at(itype));
+                    sprintf(tag,"%s%.2f",processes.at(itype).c_str(),tVal);
+                    sprintf(hname, "mlbwa__TTbar_%.2f_%s",tVal, processes.at(itype).c_str());
                 }
 
                 // get the histogram and store in mcSigHistos_gen
@@ -212,7 +212,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
         for (unsigned int bkgType = 0; bkgType < mcBkgLabels.size(); ++bkgType) {
             // format the name of the histo we want to get
             sprintf(hname, "mlbwa__%s_%s", mcBkgLabels.at(bkgType).Data(), 
-                    processes.at(itype));
+                    processes.at(itype).c_str());
             
             // 
             TH1F* histo  = (TH1F*) gDirectory->Get(hname);
@@ -259,7 +259,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
             for (int itype = 0; itype < processes.size(); ++itype) {
                 //format the name of the histo we want to get
                 sprintf(hname, "mlbwa__%s_%s", mcBkgLabels.at(i).Data(), 
-                        processes.at(itype));
+                        processes.at(itype).c_str());
                 cout << hname << endl;
 
                 TH1F* histo  = (TH1F*) gDirectory->Get(hname) ;
@@ -302,7 +302,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
     // define the datasets initially
     // loop through the interaction types
     for (int itype = 0; itype < processes.size(); ++itype) {
-        sprintf(hname, "histo_bck%s", processes.at(itype));
+        sprintf(hname, "histo_bck%s", processes.at(itype).c_str());
         cout << hname << endl;
         
         w->import(*(new RooDataHist(hname, hname, *propVal, mcTotalBkgHistosScaled[processes.at(itype)])));
@@ -410,8 +410,8 @@ RPoissonAnalysis::RPoissonAnalysis() {
 
         sprintf(name2, "SIMUL::model%.2f(sample", tVal);
         for (int j = 0; j < processes.size(); ++j) {
-            sprintf(name , "%s,%s=model%s%.2f", name2, processes.at(j),
-                    processes.at(j), tVal);
+            sprintf(name , "%s,%s=model%s%.2f", name2, processes.at(j).c_str(),
+                    processes.at(j).c_str(), tVal);
             sprintf(name2, "%s", name);
         }
 
@@ -421,7 +421,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
     }
 
     if (bkgsyst) {
-        bkgMean     = new RooRealVar("bkgmean" , "bkg " + sProp , 180.);
+        bkgMean     = new RooRealVar("bkgmean" , "bkg " + sProp.c_str() , 180.);
         bkgWidth    = new RooRealVar("bkgwidth", "bkg fit width", 20.);
         bkgHistoPDF = new RooGaussian("background", "background PDF",
                                       *propVal,*bkgMean,*bkgWidth);
@@ -460,7 +460,7 @@ void RPoissonAnalysis::typeTag(char* nameToTag) {
     cout << " - Name to modify is: " << nameToTag << endl;
 
     for (int j = 0; j < processes.size(); ++j) {
-        sprintf(tName,"%s%s", nameToTag, processes.at(j));
+        sprintf(tName,"%s%s", nameToTag, processes.at(j).c_str());
 
         if (j<(processes.size()-1)) sprintf(nameToTag,"%s_", tName);
         else sprintf(nameToTag,"%s", tName);
@@ -492,11 +492,11 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
     float propPoint = mcSigTemplVal.at(iTemplate);
 
     // initialize new toy histograms 
-    toyMean   = new TH1F("mean"  ,sProp,100, minPropVal, maxPropVal);
-    toyBias   = new TH1F("bias"  ,(sProp+string("bias")),100, -3.5, 3.5);
-    toyPull   = new TH1F("pull"  ,"pull",200, -10, 10);
-    toyError  = new TH1F("error" ,(sProp+string("uncertainty")),500, 0, 0.4);
-    toyLL     = new TH2F("LL"  ,"LL residuals",9, -0.5, 8.5,200,-100,100);
+    toyMean   = new TH1F("mean"  ,sProp.c_str(),100, minPropVal, maxPropVal);                       //HARDCODED
+    toyBias   = new TH1F("bias"  ,(sProp.c_str() + "bias"),100, -3.5, 3.5);                         //HARDCODED
+    toyPull   = new TH1F("pull"  ,"pull",200, -10, 10);                                             //HARDCODED
+    toyError  = new TH1F("error" ,(sProp.c_str()+"uncertainty"), 500, 0, 0.4);                      //HARDCODED
+    toyLL     = new TH2F("LL"  ,"LL residuals",9, -0.5, 8.5,200,-100,100);                          //HARDCODED
 
     // histogram styling
     toyMean->GetXaxis()->SetNdivisions(50205);
@@ -577,7 +577,7 @@ void RPoissonAnalysis::assembleDatasets() {
 
     // iterate through all the types
     for (int itype = 0; itype < processes.size(); ++itype) {
-        sprintf(tName, "%s", processes.at(itype));
+        sprintf(tName, "%s", processes.at(itype).c_str());
 
         cout << " - process type " << tName
              << " has mean value " << datasets[tName]->GetMean()) << endl;
@@ -623,8 +623,8 @@ double RPoissonFitHandler::fitPoint(int index) {
         //
         for (int itype = 0; itype < processes.size(); ++itype) {
             //
-            sprintf(tag,"%s%.2f",processes.at(itype),mcSigTemplVal.at(index));
-            sprintf(tName,"ratio%s%.2f", processes.at(itype), mcSigTemplVal.at(index));
+            sprintf(tag,"%s%.2f",processes.at(itype).c_str(),mcSigTemplVal.at(index));
+            sprintf(tName,"ratio%s%.2f", processes.at(itype).c_str(), mcSigTemplVal.at(index));
 
             // S/(S+B) significance metric
             w->var(tName)->setVal(mcSigTemplHistosScaled[tag]->Integral()/
@@ -635,7 +635,7 @@ double RPoissonFitHandler::fitPoint(int index) {
     } else if (useRatio && fixBkg == 1) {
         //
         for (int itype = 0; itype < processes.size(); ++itype) {
-            sprintf(tName,"ratio%s%.2f", processes.at(itype), mcSigTemplVal.at(index));
+            sprintf(tName,"ratio%s%.2f", processes.at(itype).c_str(), mcSigTemplVal.at(index));
             w->var(tName)->setVal(1.0);
             w->var(tName)->setConstant(1);
         }

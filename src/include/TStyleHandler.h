@@ -28,49 +28,49 @@ class TStyleHandler
         /////////////////////////////////////
         //             CMS_lumi            //
         /////////////////////////////////////
-        
-        void CMS_lumi();
-        void CMS_lumi(TPad* pad, int iPeriod, int iPosX);
 
-        int iPeriod = 7;
-        int iPosX = 0;
+        static int iPeriod = 7;
+        static int iPosX = 0;
 
-        TString cmsText     = "CMS";
-        float cmsTextFont   = 61;  // default is helvetic-bold
+        static TString cmsText     = "CMS";
+        static float cmsTextFont   = 61;  // default is helvetic-bold
 
-        bool outOfFrame    = false;
-        bool writeExtraText = false;
-        TString extraText   = "Preliminary";
-        float extraTextFont = 52;  // default is helvetica-italics
+        static bool outOfFrame    = false;
+        static bool writeExtraText = false;
+        static TString extraText   = "Preliminary";
+        static float extraTextFont = 52;  // default is helvetica-italics
 
         // text sizes and text offsets with respect to the top frame
         // in unit of the top margin size
-        float lumiTextSize     = 0.6;
-        float lumiTextOffset   = 0.2;
-        float cmsTextSize      = 0.75;
-        float cmsTextOffset    = 0.1;  // only used in outOfFrame version
+        static float lumiTextSize     = 0.6;
+        static float lumiTextOffset   = 0.2;
+        static float cmsTextSize      = 0.75;
+        static float cmsTextOffset    = 0.1;  // only used in outOfFrame version
 
-        float relPosX    = 0.045;
-        float relPosY    = 0.035;
-        float relExtraDY = 1.2;
+        static float relPosX    = 0.045;
+        static float relPosY    = 0.035;
+        static float relExtraDY = 1.2;
 
         // ratio of "CMS" and extra text size
-        float extraOverCmsTextSize  = 0.76;
+        static float extraOverCmsTextSize  = 0.76;
 
-        TString lumi_13TeV = "20.1 fb^{-1}";
-        TString lumi_8TeV  = "19.7 fb^{-1}";
-        TString lumi_7TeV  = "5.1 fb^{-1}";
+        static TString lumi_13TeV = "20.1 fb^{-1}";
+        static TString lumi_8TeV  = "19.7 fb^{-1}";
+        static TString lumi_7TeV  = "5.1 fb^{-1}";
 
-        bool drawLogo      = false;
+        static bool drawLogo      = false;
 
         /////////////////////////////////////
         //             tdrStyle            //
         /////////////////////////////////////
         
-        TStyle* setTDRStyle();
 
     public:
-        static void setStyle(TPad *pad, int iPeriod, int iPosX);
+        static void CMS_lumi();
+        static void CMS_lumi(TPad* pad, int iPeriod, int iPosX);
+        static TStyle* setTDRStyle();
+
+        void setStyle(TPad *pad, int iPeriod, int iPosX);
 
 };
 

@@ -12,15 +12,12 @@
 #include "include/TStyleHandler.h"
 #include "TCanvas.h"
 
+
 TStyleHandler::TStyleHandler() {
 }
 
-TStyleHandler::TStyleHandler(TPad *pad, int iPeriod, int iPosX) {
-    CMS_lumi(pad, iPeriod, iPosX);
-    setTDRStyle();
-}
 
-void TStyleHandler::CMS_lumi(TPad *pad, int iPeriod, int iPosX) {
+static void TStyleHandler::CMS_lumi(TPad *pad, int iPeriod, int iPosX) {
     if( iPosX/10==0 ) 
     {
         outOfFrame = true;
@@ -179,11 +176,13 @@ void TStyleHandler::CMS_lumi(TPad *pad, int iPeriod, int iPosX) {
     return;
 }
 
+
 void TStyleHandler::CMS_lumi() {
     TCanvas *pad = new TCanvas("CMS_lumi_pad", "", 600, 600);
     CMS_lumi(pad, iPeriod, iPosX);
     return;
 }
+
 
 TStyle* TStyleHandler::setTDRStyle() {
     TStyle *tdrStyle = new TStyle("tdrStyle","Style for P-TDR");
@@ -291,6 +290,7 @@ TStyle* TStyleHandler::setTDRStyle() {
     tdrStyle->cd();
     return tdrStyle;
 }
+
 
 static void TStyleHandler::setStyle(TPad *tPad, int tPeriod, int tPosX) {
     CMS_lumi(tPad, tPeriod, tPosX);
