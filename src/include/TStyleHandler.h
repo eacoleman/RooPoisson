@@ -47,12 +47,11 @@ class TStyleHandler
         static const float cmsTextSize;
         static const float cmsTextOffset;
 
-        static const float relPosX;
         static const float relPosY;
         static const float relExtraDY;
 
         // ratio of "CMS" and extra text size
-        static const float extraOverCmsTextSiz;
+        static const float extraOverCmsTextSize;
 
         static const TString lumi_13TeV;
         static const TString lumi_8TeV;

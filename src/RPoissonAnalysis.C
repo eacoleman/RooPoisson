@@ -12,7 +12,7 @@
 RPoissonAnalysis::RPoissonAnalysis() {
 
     //
-    TStyleHandler->setTDRStyle();
+    TStyleHandler()->setTDRStyle();
 
     int W = 800;                                                                                    //HARDCODED
     int H = 600;                                                                                    //HARDCODED
@@ -63,7 +63,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
     char evHistoName[15]   = "h_nEvents";
 
     //
-    propVal = new RooRealVar(sProp.c_str(), "Reconstructed " + sProp.c_str(),
+    propVal = new RooRealVar(sProp.c_str(), strcat("Reconstructed ", sProp.c_str()),
                              lowerCut, upperCut);
     sample  = new RooCategory("sample", "sample") ;
 
@@ -173,7 +173,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
             if (!systematicsPDF) tVal = mcSigTemplVal.at(i);
 
             //loop through the interaction types
-            for (int itype = 0;itype!=maxType;++itype) {
+            for (int itype = 0; itype < processes.size(); ++itype) {
                 // get the histogram name
                 if (systematicsPDF) {
                     sprintf(tag,"%s_pdf%i",processes.at(itype).c_str(),i);
@@ -295,9 +295,9 @@ RPoissonAnalysis::RPoissonAnalysis() {
     fitResults = 0;
 
     // establish the RooWorkspace
-    w = new RooWorkspace("w", "workspace") ;
-    w->import(*propVal);
-    w->import(*sample);
+    workspace = new RooWorkspace("w", "workspace") ;
+    workspace->import(*propVal);
+    workspace->import(*sample);
 
     // define the datasets initially
     // loop through the interaction types
@@ -305,26 +305,30 @@ RPoissonAnalysis::RPoissonAnalysis() {
         sprintf(hname, "histo_bck%s", processes.at(itype).c_str());
         cout << hname << endl;
         
-        w->import(*(new RooDataHist(hname, hname, *propVal, mcTotalBkgHistosScaled[processes.at(itype)])));
+        workspace->import(*(new RooDataHist(hname, hname, *propVal, 
+                                            mcTotalBkgHistosScaled[processes.at(itype)])));
         
-        sprintf(hname,"HistPdf::background%s(tVal,histo_bck%s)", processes.at(itype), processes.at(itype));
+        sprintf(hname,"HistPdf::background%s(tVal,histo_bck%s)", 
+                processes.at(itype).c_str(), processes.at(itype).c_str());
         cout << hname << endl;
         
-        w->factory(hname);
+        workspace->factory(hname);
 
         if (systematics) {
-            sprintf(hname,"histo_bck_gen%s",processes.at(itype));
-            w->import(*(new RooDataHist(hname, hname, *propVal, mcTotalBkgHistosScaled_gen[processes.at(itype)])));
+            sprintf(hname,"histo_bck_gen%s",processes.at(itype).c_str());
+            workspace->import(*(new RooDataHist(hname, hname, *propVal, 
+                                                mcTotalBkgHistosScaled_gen[processes.at(itype)])));
 
-            sprintf(hname,"HistPdf::background_gen%s(tVal,histo_bck%s)", processes.at(itype), processes.at(itype));
-            w->factory(hname);
+            sprintf(hname,"HistPdf::background_gen%s(tVal,histo_bck%s)", 
+                    processes.at(itype).c_str(), processes.at(itype).c_str());
+            workspace->factory(hname);
         }
 
         //
         float totalBkg = (float) mcTotalBkgHistosScaled[processes.at(itype)]->Integral();
 
         //
-        sprintf(hname,"nbrBkgEvts%s", processes.at(itype));
+        sprintf(hname,"nbrBkgEvts%s", processes.at(itype).c_str());
         cout << hname << endl;
 
         //
@@ -332,7 +336,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
             = new RooRealVar(hname, hname, totalBkg, 0, 10000);                                     //HARDCODED
 
         //
-        w->import(*nbrBkgEvts[processes.at(itype)]);
+        workspace->import(*nbrBkgEvts[processes.at(itype)]);
 
         // loop through the propVals
         for (unsigned int i = 0; i < mcSigTemplVal.size(); ++i) {
@@ -340,62 +344,63 @@ RPoissonAnalysis::RPoissonAnalysis() {
             cout << " - building "  << processes.at(itype) << " pdf for "
                  << sProp << " " << tVal << endl;
 
-            sprintf(tag, "%s%.2f", processes.at(itype), tVal);
+            sprintf(tag, "%s%.2f", processes.at(itype).c_str(), tVal);
 
             //
-            sprintf(tag  , "%s%.2f"         , processes.at(itype), tVal);
-            sprintf(hname, "histo_sgn%s%.2f", processes.at(itype), tVal);
+            sprintf(tag  , "%s%.2f"         , processes.at(itype).c_str(), tVal);
+            sprintf(hname, "histo_sgn%s%.2f", processes.at(itype).c_str(), tVal);
             cout << hname << " " << tag << endl;
             
             //
-            w->import( *(new RooDataHist(hname, hname, *propVal, mcSigTemplHistosScaled[tag]) ));
-            sprintf(hname,"HistPdf::signal%s%.2f(tVal,histo_sgn%s%.2f)",processes.at(itype),tVal,processes.at(itype),tVal);
+            workspace->import( *(new RooDataHist(hname, hname, *propVal, mcSigTemplHistosScaled[tag]) ));
+            sprintf(hname,"HistPdf::signal%s%.2f(tVal,histo_sgn%s%.2f)",
+                    processes.at(itype).c_str(),tVal,processes.at(itype).c_str(),tVal);
             cout << hname << endl;
             
             //
-            w->factory(hname);
+            workspace->factory(hname);
 
             if (systematics && !systematicsPDF) {
                 //
-                sprintf(hname, "histo_sgn_gen%s%.2f", processes.at(itype), tVal);
-                w->import( *(new RooDataHist(hname, hname, *propVal, 
+                sprintf(hname, "histo_sgn_gen%s%.2f", processes.at(itype).c_str(), tVal);
+                workspace->import( *(new RooDataHist(hname, hname, *propVal, 
                                              mcSigTemplHistosScaled_gen[tag])));
 
                 //
                 sprintf(hname,"HistPdf::signal_gen%s%.2f(tVal,histo_sgn_gen%s%.2f)",
-                        processes.at(itype), tVal, processes.at(itype), tVal);
-                w->factory(hname);
+                        processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), tVal);
+                workspace->factory(hname);
             }
 
             //
             if (useRatio) {
                 sprintf(hname,"SUM::model%s%.2f( ratio%s%.2f[0,1]*signal%s%.2f, background%s )",
-                        processes.at(itype), tVal, processes.at(itype), tVal, 
-                        processes.at(itype), tVal, processes.at(itype));
+                        processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), tVal, 
+                        processes.at(itype).c_str(), tVal, processes.at(itype).c_str());
             } else {
                 sprintf(hname,"SUM::model%s%.2f( Nsig%s%.2f[0,1000]*signal%s%.2f, nbrBkgEvts%s*background%s )",
-                        processes.at(itype), tVal, processes.at(itype), tVal, 
-                        processes.at(itype), tVal, processes.at(itype), 
-                        processes.at(itype));
+                        processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), tVal, 
+                        processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), 
+                        processes.at(itype).c_str());
             }
 
             cout << hname << endl;
 
-            w->factory(hname);
+            workspace->factory(hname);
         }
 
         if (systematics && systematicsPDF) {
             for (int i = 0; i < 41; ++i){                                                           //HARDCODED
-                sprintf(hname,"histo_sgn_gen%s%i",processes.at(itype),i);
-                sprintf(tag,"%s_pdf%i",processes.at(itype),i);
-                w->import( *(new RooDataHist(hname, hname, *propVal, 
+                sprintf(hname,"histo_sgn_gen%s%i",processes.at(itype).c_str(),i);
+                sprintf(tag,"%s_pdf%i",processes.at(itype).c_str(),i);
+                workspace->import( *(new RooDataHist(hname, hname, *propVal, 
                                              mcSigTemplHistosScaled_gen[tag])));
 
                 sprintf(hname, "HistPdf::signal_gen%s%i(tVal,histo_sgn_gen%s%i)",
-                        processes.at(itype), i, processes.at(itype), i);
+                        processes.at(itype).c_str(), i, processes.at(itype).c_str(), i);
                 cout << hname << endl;
 
-                w->factory(hname);
+                workspace->factory(hname);
             }
         }
 
@@ -417,11 +422,11 @@ RPoissonAnalysis::RPoissonAnalysis() {
 
         sprintf(name,"%s)",name2);
 
-        w->factory(name);
+        workspace->factory(name);
     }
 
     if (bkgsyst) {
-        bkgMean     = new RooRealVar("bkgmean" , "bkg " + sProp.c_str() , 180.);
+        bkgMean     = new RooRealVar("bkgmean" , strcat("bkg ", sProp.c_str()), 180.);
         bkgWidth    = new RooRealVar("bkgwidth", "bkg fit width", 20.);
         bkgHistoPDF = new RooGaussian("background", "background PDF",
                                       *propVal,*bkgMean,*bkgWidth);
@@ -493,9 +498,9 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
 
     // initialize new toy histograms 
     toyMean   = new TH1F("mean"  ,sProp.c_str(),100, minPropVal, maxPropVal);                       //HARDCODED
-    toyBias   = new TH1F("bias"  ,(sProp.c_str() + "bias"),100, -3.5, 3.5);                         //HARDCODED
+    toyBias   = new TH1F("bias"  ,strcat(sProp.c_str(), "bias"),100, -3.5, 3.5);                    //HARDCODED
     toyPull   = new TH1F("pull"  ,"pull",200, -10, 10);                                             //HARDCODED
-    toyError  = new TH1F("error" ,(sProp.c_str()+"uncertainty"), 500, 0, 0.4);                      //HARDCODED
+    toyError  = new TH1F("error" ,strcat(sProp.c_str(), "uncertainty"), 500, 0, 0.4);               //HARDCODED
     toyLL     = new TH2F("LL"  ,"LL residuals",9, -0.5, 8.5,200,-100,100);                          //HARDCODED
 
     // histogram styling
@@ -593,7 +598,7 @@ void RPoissonAnalysis::assembleDatasets() {
 }
 
 
-double RPoissonFitHandler::fitPoint(int index) {
+double RPoissonAnalysis::fitPoint(int index) {
     cout << "Fit with template " << sProp 
          << ": " << mcSigTemplVal.at(index) << endl;
 
@@ -613,7 +618,7 @@ double RPoissonFitHandler::fitPoint(int index) {
     sprintf(tName,"model%.2f", mcSigTemplVal.at(index));
 
     //
-    pdffit = w->pdf(tName) ;
+    pdffit = workspace->pdf(tName) ;
     pdffit->Print();
 
     //
@@ -627,17 +632,17 @@ double RPoissonFitHandler::fitPoint(int index) {
             sprintf(tName,"ratio%s%.2f", processes.at(itype).c_str(), mcSigTemplVal.at(index));
 
             // S/(S+B) significance metric
-            w->var(tName)->setVal(mcSigTemplHistosScaled[tag]->Integral()/
+            workspace->var(tName)->setVal(mcSigTemplHistosScaled[tag]->Integral()/
                                   (mcSigTemplHistosScaled[tag]->Integral()
                                    +mcTotalBkgHistosScaled[processes.at(itype)]->Integral()));
-            w->var(tName)->setConstant(1);
+            workspace->var(tName)->setConstant(1);
         }
     } else if (useRatio && fixBkg == 1) {
         //
         for (int itype = 0; itype < processes.size(); ++itype) {
             sprintf(tName,"ratio%s%.2f", processes.at(itype).c_str(), mcSigTemplVal.at(index));
-            w->var(tName)->setVal(1.0);
-            w->var(tName)->setConstant(1);
+            workspace->var(tName)->setVal(1.0);
+            workspace->var(tName)->setConstant(1);
         }
     }
 
@@ -651,7 +656,7 @@ double RPoissonFitHandler::fitPoint(int index) {
 }
 
 
-int RPoissonFitHandler::fitAll() {
+int RPoissonAnalysis::fitAll() {
     // cleanup and prepare for the next round of fits
     chiSquared.clear();
     chiSquared.resize(mcSigTemplVal.size()+1);
@@ -666,7 +671,7 @@ int RPoissonFitHandler::fitAll() {
 }
 
 
-pair<double,double> RPoissonFitHandler::minimize(bool fake,
+pair<double,double> RPoissonAnalysis::minimize(bool fake,
                                                  bool all = true, 
                                                  int  pointsToUse = 2) {
     //
@@ -771,7 +776,7 @@ pair<double,double> RPoissonFitHandler::minimize(bool fake,
                                1/sqrt(2*a));
 }
 
-void RPoissonFitHandler::runCalibration(int numberOfExps = 1000) {
+void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
     // keep track of timing
     time_t start, end;
     time   (&start);

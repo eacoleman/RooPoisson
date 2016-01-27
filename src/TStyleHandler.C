@@ -25,8 +25,8 @@ const float TStyleHandler::cmsTextFont   = 61;  // default is helvetic-bold
 
 const bool TStyleHandler::outOfFrame     = true;
 const bool TStyleHandler::writeExtraText = false;
-const TString TStyleHandler::extraText   = "Preliminary";
 const float TStyleHandler::extraTextFont = 52;  // default is helvetica-italics
+const TString TStyleHandler::extraText   = "Preliminary";
 
 // text sizes and text offsets with respect to the top frame
 // in unit of the top margin size
@@ -35,7 +35,6 @@ const float TStyleHandler::lumiTextOffset   = 0.2;
 const float TStyleHandler::cmsTextSize      = 0.75;
 const float TStyleHandler::cmsTextOffset    = 0.1;  // only used in outOfFrame version
 
-const float TStyleHandler::relPosX    = 0.045;
 const float TStyleHandler::relPosY    = 0.035;
 const float TStyleHandler::relExtraDY = 1.2;
 
@@ -56,6 +55,7 @@ void TStyleHandler::CMS_lumi(TPad *pad, int iPeriod, int iPosX) {
 
     int alignY_=3;
     int alignX_=2;
+    float relPosX=0.045;
     if( iPosX/10==0 ) alignX_=1;
     if( iPosX==0    ) alignX_=1;
     if( iPosX==0    ) alignY_=1;
