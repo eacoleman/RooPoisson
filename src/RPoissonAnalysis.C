@@ -492,11 +492,12 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
     float propPoint = mcSigTemplVal.at(iTemplate);
 
     // initialize new toy histograms
-    toyMean   = new TH1F("mean"  ,sProp.c_str(),100, minPropVal, maxPropVal);                       //HARDCODED
-    toyBias   = new TH1F("bias"  ,strcat(sProp.c_str(), "bias"),100, -3.5, 3.5);                    //HARDCODED
-    toyPull   = new TH1F("pull"  ,"pull",200, -10, 10);                                             //HARDCODED
-    toyError  = new TH1F("error" ,strcat(sProp.c_str(), "uncertainty"), 500, 0, 0.4);               //HARDCODED
-    toyLL     = new TH2F("LL"  ,"LL residuals",9, -0.5, 8.5,200,-100,100);                          //HARDCODED
+    char sPropPref[] = sProp.c_str();
+    toyMean   = new TH1F("mean"  , sPropPref, 100, minPropVal, maxPropVal);                         //HARDCODED
+    toyBias   = new TH1F("bias"  , strcat(sPropPref, " bias"), 100, -3.5, 3.5);                     //HARDCODED
+    toyPull   = new TH1F("pull"  , "pull", 200, -10, 10);                                           //HARDCODED
+    toyError  = new TH1F("error" , strcat(sPropPref, " uncertainty"), 500, 0, 0.4);                 //HARDCODED
+    toyLL     = new TH2F("LL"    , "LL residuals", 9, -0.5, 8.5, 200, -100, 100);                   //HARDCODED
 
     // histogram styling
     toyMean->GetXaxis()->SetNdivisions(50205);
