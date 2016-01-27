@@ -214,7 +214,7 @@ class RPoissonAnalysis
         // in mcSigTemplVal?
         int nomTemplIndex    = 0;
 
-        //
+        // antiquated - consider removing
         int fixBkg           = 3;
 
 };
