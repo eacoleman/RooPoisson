@@ -13,6 +13,41 @@
 #include "TCanvas.h"
 
 
+/////////////////////////////////////
+//             CMS_lumi            //
+/////////////////////////////////////
+
+const int TStyleHandler::iPeriod = 7;
+const int TStyleHandler::iPosX = 0;
+
+const TString TStyleHandler::cmsText     = "CMS";
+const float TStyleHandler::cmsTextFont   = 61;  // default is helvetic-bold
+
+const bool TStyleHandler::outOfFrame     = true;
+const bool TStyleHandler::writeExtraText = false;
+const TString TStyleHandler::extraText   = "Preliminary";
+const float TStyleHandler::extraTextFont = 52;  // default is helvetica-italics
+
+// text sizes and text offsets with respect to the top frame
+// in unit of the top margin size
+const float TStyleHandler::lumiTextSize     = 0.6;
+const float TStyleHandler::lumiTextOffset   = 0.2;
+const float TStyleHandler::cmsTextSize      = 0.75;
+const float TStyleHandler::cmsTextOffset    = 0.1;  // only used in outOfFrame version
+
+const float TStyleHandler::relPosX    = 0.045;
+const float TStyleHandler::relPosY    = 0.035;
+const float TStyleHandler::relExtraDY = 1.2;
+
+// ratio of "CMS" and extra text size
+const float TStyleHandler::extraOverCmsTextSize  = 0.76;
+
+const TString TStyleHandler::lumi_13TeV = "20.1 fb^{-1}";
+const TString TStyleHandler::lumi_8TeV  = "19.7 fb^{-1}";
+const TString TStyleHandler::lumi_7TeV  = "5.1 fb^{-1}";
+
+const bool TStyleHandler::drawLogo      = false;
+
 void TStyleHandler::CMS_lumi(TPad *pad, int iPeriod, int iPosX) {
     //if( iPosX/10==0 ) 
     //{

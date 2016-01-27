@@ -29,36 +29,36 @@ class TStyleHandler
         //             CMS_lumi            //
         /////////////////////////////////////
 
-        static const int iPeriod = 7;
-        static const int iPosX = 0;
+        static const int iPeriod;
+        static const int iPosX;
 
-        static const TString cmsText     = "CMS";
-        static const float cmsTextFont   = 61;  // default is helvetic-bold
+        static const TString cmsText;
+        static const float cmsTextFont; 
 
-        static const bool outOfFrame     = true;
-        static const bool writeExtraText = false;
-        static const TString extraText   = "Preliminary";
-        static const float extraTextFont = 52;  // default is helvetica-italics
+        static const bool outOfFrame;
+        static const bool writeExtraText;
+        static const TString extraText;
+        static const float extraTextFont;
 
         // text sizes and text offsets with respect to the top frame
         // in unit of the top margin size
-        static const float lumiTextSize     = 0.6;
-        static const float lumiTextOffset   = 0.2;
-        static const float cmsTextSize      = 0.75;
-        static const float cmsTextOffset    = 0.1;  // only used in outOfFrame version
+        static const float lumiTextSize;
+        static const float lumiTextOffset;
+        static const float cmsTextSize;
+        static const float cmsTextOffset;
 
-        static const float relPosX    = 0.045;
-        static const float relPosY    = 0.035;
-        static const float relExtraDY = 1.2;
+        static const float relPosX;
+        static const float relPosY;
+        static const float relExtraDY;
 
         // ratio of "CMS" and extra text size
-        static const float extraOverCmsTextSize  = 0.76;
+        static const float extraOverCmsTextSiz;
 
-        static const TString lumi_13TeV = "20.1 fb^{-1}";
-        static const TString lumi_8TeV  = "19.7 fb^{-1}";
-        static const TString lumi_7TeV  = "5.1 fb^{-1}";
+        static const TString lumi_13TeV;
+        static const TString lumi_8TeV;
+        static const TString lumi_7TeV;
 
-        static const bool drawLogo      = false;
+        static const bool drawLogo;
 
         /////////////////////////////////////
         //             tdrStyle            //
