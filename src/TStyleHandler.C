@@ -17,7 +17,7 @@ TStyleHandler::TStyleHandler() {
 }
 
 
-static void TStyleHandler::CMS_lumi(TPad *pad, int iPeriod, int iPosX) {
+void TStyleHandler::CMS_lumi(TPad *pad, int iPeriod, int iPosX) {
     if( iPosX/10==0 ) 
     {
         outOfFrame = true;
@@ -292,7 +292,7 @@ TStyle* TStyleHandler::setTDRStyle() {
 }
 
 
-static void TStyleHandler::setStyle(TPad *tPad, int tPeriod, int tPosX) {
+void TStyleHandler::setStyle(TPad *tPad, int tPeriod, int tPosX) {
     CMS_lumi(tPad, tPeriod, tPosX);
     setTDRStyle();
 }
