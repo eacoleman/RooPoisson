@@ -60,7 +60,8 @@ RPoissonAnalysis::RPoissonAnalysis() {
     char evHistoName[15]   = "h_nEvents";
 
     //
-    propVal = new RooRealVar(sProp.c_str(), strcat(*(new char[14]("Reconstructed ")), sProp.c_str()),
+    char propValPref[15] = "Reconstructed ";
+    propVal = new RooRealVar(sProp.c_str(), strcat(propValPref, sProp.c_str()),
                              lowerCut, upperCut);
     sample  = new RooCategory("sample", "sample") ;
 
@@ -423,7 +424,8 @@ RPoissonAnalysis::RPoissonAnalysis() {
     }
 
     if (bkgsyst) {
-        bkgMean     = new RooRealVar("bkgmean" , strcat(*(new char[4]("bkg ")), sProp.c_str()), 180.);
+        char bkgMeanPref[5] = "bkg ";
+        bkgMean     = new RooRealVar("bkgmean" , strcat(bkgMeanPref, sProp.c_str()), 180.);
         bkgWidth    = new RooRealVar("bkgwidth", "bkg fit width", 20.);
         bkgHistoPDF = new RooGaussian("background", "background PDF",
                                       *propVal,*bkgMean,*bkgWidth);
@@ -489,11 +491,11 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
     //
     float propPoint = mcSigTemplVal.at(iTemplate);
 
-    // initialize new toy histograms 
+    // initialize new toy histograms
     toyMean   = new TH1F("mean"  ,sProp.c_str(),100, minPropVal, maxPropVal);                       //HARDCODED
-    toyBias   = new TH1F("bias"  ,strcat(sProp.c_str(), *(new char[4]("bias"))),100, -3.5, 3.5);                    //HARDCODED
+    toyBias   = new TH1F("bias"  ,strcat(sProp.c_str(), "bias"),100, -3.5, 3.5);                    //HARDCODED
     toyPull   = new TH1F("pull"  ,"pull",200, -10, 10);                                             //HARDCODED
-    toyError  = new TH1F("error" ,strcat(sProp.c_str(), *(new char[11]("uncertainty"))), 500, 0, 0.4);               //HARDCODED
+    toyError  = new TH1F("error" ,strcat(sProp.c_str(), "uncertainty"), 500, 0, 0.4);               //HARDCODED
     toyLL     = new TH2F("LL"  ,"LL residuals",9, -0.5, 8.5,200,-100,100);                          //HARDCODED
 
     // histogram styling
@@ -615,7 +617,7 @@ double RPoissonAnalysis::fitPoint(int index) {
     pdffit->Print();
 
     //
-    if (useRatio && fixBckg == 3) {
+    if (useRatio && fixBkg == 3) {
         char tag[50];
 
         //
@@ -878,10 +880,10 @@ void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
             dif , dif/numberOfExps);
 }
 
-void RPoissonAnalysis::run() {
+void RPoissonAnalysis::run(char* dataFileName) {
 
 }
 
-void RPoissonAnalysis::save() {
+void RPoissonAnalysis::save(char* outFileName) {
 
 }
