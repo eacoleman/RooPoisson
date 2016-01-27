@@ -492,7 +492,9 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
     float propPoint = mcSigTemplVal.at(iTemplate);
 
     // initialize new toy histograms
-    char sPropPref[] = sProp.c_str();
+    char * sPropPref = new char[sProp.length()];
+    strcpy(sPropPref, sProp.c_str());
+    
     toyMean   = new TH1F("mean"  , sPropPref, 100, minPropVal, maxPropVal);                         //HARDCODED
     toyBias   = new TH1F("bias"  , strcat(sPropPref, " bias"), 100, -3.5, 3.5);                     //HARDCODED
     toyPull   = new TH1F("pull"  , "pull", 200, -10, 10);                                           //HARDCODED
