@@ -54,6 +54,8 @@ RPoissonAnalysis::RPoissonAnalysis() {
     hFitFailedDiff = new TH1F("hFitFailedDiff","hFitFailedDiff", 60, -30., 30.);                    //HARDCODED
     fittedTempl    = -1;
 
+    nTotSample.resize(processes.size());
+
     //
     char dataHistoName[20] = "PeakMassTree_";
     char histoName[20]     = "mlbwa_";
@@ -306,8 +308,8 @@ RPoissonAnalysis::RPoissonAnalysis() {
         workspace->import(*(new RooDataHist(hname, hname, *propVal, 
                                             mcTotalBkgHistosScaled[processes.at(itype)])));
         
-        sprintf(hname,"HistPdf::background%s(tVal,histo_bck%s)", 
-                processes.at(itype).c_str(), processes.at(itype).c_str());
+        sprintf(hname,"HistPdf::background%s(%s,histo_bck%s)", 
+                processes.at(itype).c_str(), sProp.c_str(), processes.at(itype).c_str());
         cout << hname << endl;
         
         workspace->factory(hname);
@@ -317,8 +319,8 @@ RPoissonAnalysis::RPoissonAnalysis() {
             workspace->import(*(new RooDataHist(hname, hname, *propVal, 
                                                 mcTotalBkgHistosScaled_gen[processes.at(itype)])));
 
-            sprintf(hname,"HistPdf::background_gen%s(tVal,histo_bck%s)", 
-                    processes.at(itype).c_str(), processes.at(itype).c_str());
+            sprintf(hname,"HistPdf::background_gen%s(%s,histo_bck%s)", 
+                    processes.at(itype).c_str(), sProp.c_str(),  processes.at(itype).c_str());
             workspace->factory(hname);
         }
 
@@ -351,8 +353,8 @@ RPoissonAnalysis::RPoissonAnalysis() {
             
             //
             workspace->import( *(new RooDataHist(hname, hname, *propVal, mcSigTemplHistosScaled[tag]) ));
-            sprintf(hname,"HistPdf::signal%s%.2f(tVal,histo_sgn%s%.2f)",
-                    processes.at(itype).c_str(),tVal,processes.at(itype).c_str(),tVal);
+            sprintf(hname,"HistPdf::signal%s%.2f(%s,histo_sgn%s%.2f)",
+                    processes.at(itype).c_str(),tVal,sProp.c_str(),processes.at(itype).c_str(),tVal);
             cout << hname << endl;
             
             //
@@ -365,7 +367,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
                                              mcSigTemplHistosScaled_gen[tag])));
 
                 //
-                sprintf(hname,"HistPdf::signal_gen%s%.2f(tVal,histo_sgn_gen%s%.2f)",
+                sprintf(hname,"HistPdf::signal_gen%s%.2f(propVal,histo_sgn_gen%s%.2f)",
                         processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), tVal);
                 workspace->factory(hname);
             }
@@ -394,8 +396,8 @@ RPoissonAnalysis::RPoissonAnalysis() {
                 workspace->import( *(new RooDataHist(hname, hname, *propVal, 
                                              mcSigTemplHistosScaled_gen[tag])));
 
-                sprintf(hname, "HistPdf::signal_gen%s%i(tVal,histo_sgn_gen%s%i)",
-                        processes.at(itype).c_str(), i, processes.at(itype).c_str(), i);
+                sprintf(hname, "HistPdf::signal_gen%s%i(%s,histo_sgn_gen%s%i)",
+                        processes.at(itype).c_str(), i, sProp.c_str(), processes.at(itype).c_str(), i);
                 cout << hname << endl;
 
                 workspace->factory(hname);
