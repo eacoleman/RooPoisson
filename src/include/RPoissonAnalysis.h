@@ -181,20 +181,24 @@ class RPoissonAnalysis
         string sUnit   = "GeV";
 
         // luminosity and 'b^{-1}' prefix
-        float lLumi   = 19.7;
+        float  lLumi   = 19.7;
         string lUnit   = "f";
 
         // labels for subprocesses, background processes
-        vector<string> processes;
-        vector<TString> mcBkgLabels;
+        vector<string>  processes = { "E", "EE", "EM", "MM", "M" };
+        vector<TString> mcBkgLabels = { "SingleTop", 
+                                        "WJets", 
+                                        "DrellYan", 
+                                        "Diboson", 
+                                        "QCD" }
 
 
         ///////////////////////////////////
         // Variables to control settings //
         ///////////////////////////////////
        
-        string dataFileLoc,
-               systFileLoc;
+        string dataFileLoc = "./samples/"
+               systFileLoc = "./samples/";
         
         vector<float> mcSigTemplVal;
         
