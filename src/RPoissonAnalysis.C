@@ -470,10 +470,10 @@ void RPoissonAnalysis::typeTag(char* nameToTag) {
 }
 
 
-void RPoissonAnalysis::generateToy(int templToUse) {
+int RPoissonAnalysis::generateToy(int templToUse) {
 
     // some cleanup
-    if (toyDataHisto!=0) {
+    if (toyDataHisto != 0) {
         delete toyDataHisto;
     }
 
@@ -484,9 +484,9 @@ void RPoissonAnalysis::generateToy(int templToUse) {
     int n;
     totGenSig = totGenBkg = 0;
 
-    for (int itype = 0;itype!=maxType;++itype) {
+    for (int itype = 0; itype < processes.size(); ++itype) {
 
-        delete datasets[type[itype]];
+        delete datasets[processes.at(itype)];
 
         if (!fixedSample) {
 
@@ -503,7 +503,7 @@ void RPoissonAnalysis::generateToy(int templToUse) {
                 n = _random.Poisson((float) mcSigTemplHistosScaled[tag]->Integral(binLow, binHigh));
             }
 
-            cout << " - generating "<< n << " " << type[itype]<<" signal events of ";
+            cout << " - generating "<< n << " " << processes.at(itype) << " signal events of ";
 
             if (!systematics || !systematicsPDF) cout << sProp  << " " << mcSigTemplVal[templToUse];
             else                                 cout << "pdf " << templToUse;
@@ -516,21 +516,21 @@ void RPoissonAnalysis::generateToy(int templToUse) {
             totGenSig += n;
 
             if (systematics) {
-                n = _random.Poisson((float) mcTotalBkgHistoScaled_gen[processes.at(itype)]->Integral(binLow, binHigh));
+                n = _random.Poisson((float) mcTotalBkgHistosScaled_gen[processes.at(itype)]->Integral(binLow, binHigh));
             } else {
-                n = _random.Poisson((float) mcTotalBkgHistoScaled[processes.at(itype)]->Integral(binLow, binHigh));
+                n = _random.Poisson((float) mcTotalBkgHistosScaled[processes.at(itype)]->Integral(binLow, binHigh));
             }
 
-            generatedBkg[processes.at(itype)] = n; 
+            genBkg[processes.at(itype)] = n; 
             totGenBkg += n;
 
             cout << " - generating "<< n << " " << " background events"
                  << ", with Poisson mean "
-                 << (float) mcTotalBkgHistoScaled[processes.at(itype)]->Integral(binLow, binHigh)
+                 << (float) mcTotalBkgHistosScaled[processes.at(itype)]->Integral(binLow, binHigh)
                  << endl;
 
         } else {
-            sprintf(tag, "%s%.2f", type[itype], mcSignTemplVal[4]);                                 //HARDCODED REDALERT
+            sprintf(tag, "%s%.2f", processes.at(itype).c_str(), mcSigTemplVal[4]);                  //HARDCODED REDALERT
 
             int binLow  = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(lowerCut);
             int binHigh = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(upperCut);
@@ -542,30 +542,30 @@ void RPoissonAnalysis::generateToy(int templToUse) {
                 if (systematicsPDF) sprintf(tag, "%s_pdf%i", processes.at(itype).c_str(), templToUse);
                 sigProb = mcSigTemplHistosScaled_gen[tag]->Integral(binLow, binHigh) /
                             (mcSigTemplHistosScaled_gen[tag]->Integral(binLow, binHigh)
-                              + mcTotalBkgHistoScaled_gen[processes.at(itype)]->Integral(binLow, binHigh));
+                              + mcTotalBkgHistosScaled_gen[processes.at(itype)]->Integral(binLow, binHigh));
             } else {
                 sigProb = mcSigTemplHistosScaled[tag]->Integral(binLow, binHigh) /
                             (mcSigTemplHistosScaled[tag]->Integral(binLow, binHigh)
-                              + mcTotalBkgHistoScaled[processes.at(itype)]->Integral(binLow, binHigh));
+                              + mcTotalBkgHistosScaled[processes.at(itype)]->Integral(binLow, binHigh));
             }
 
             n = _random.Binomial(nTotSample[itype], sigProb);
-            cout << "Generate "<< n << " " << type[itype]<<" signal events of ";
+            cout << "Generate " << n << " " << processes.at(itype) << " signal events of ";
 
             if (!systematics || !systematicsPDF) cout << sProp  << " " << mcSigTemplVal[templToUse];
             else                                 cout << "pdf " << templToUse;
             
             cout << ", with binomial prob " << sigProb << endl;
             genSig[processes.at(itype)] = n; 
-            totalGeneratedSignal += n;
+            totGenSig += n;
             genBkg[processes.at(itype)] = nTotSample[itype] - n;
 
-            if (generatedBkg[processes.at(itype)] < 0.){
+            if (genBkg[processes.at(itype)] < 0.){
                 cout << "ERROR: number of background events < 0.\n";
                 assert(false);
             }
 
-            totalGeneratedBkg += genBkg[processes.at(itype)];
+            totGenBkg += genBkg[processes.at(itype)];
             cout << " - generated " << genBkg[processes.at(itype)] << " " 
                  << " background events\n";
         }
@@ -589,9 +589,9 @@ void RPoissonAnalysis::generateToy(int templToUse) {
         cout << hname << endl;
 
         if (systematics) {
-            sprintf(hname,"background_gen%s", processes.at(itype));
+            sprintf(hname,"background_gen%s", processes.at(itype).c_str());
         } else {
-            sprintf(hname,"background%s", processes.at(itype));
+            sprintf(hname,"background%s", processes.at(itype).c_str());
         }
 
         datasets[processes.at(itype)]->Add(workspace->pdf(hname)->generateBinned(*propVal, 

@@ -190,14 +190,14 @@ class RPoissonAnalysis
                                         "WJets", 
                                         "DrellYan", 
                                         "Diboson", 
-                                        "QCD" }
+                                        "QCD" };
 
 
         ///////////////////////////////////
         // Variables to control settings //
         ///////////////////////////////////
        
-        string dataFileLoc = "./samples/"
+        string dataFileLoc = "./samples/",
                systFileLoc = "./samples/";
         
         vector<float> mcSigTemplVal;
