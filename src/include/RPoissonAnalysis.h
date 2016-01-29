@@ -197,8 +197,8 @@ class RPoissonAnalysis
         // Variables to control settings //
         ///////////////////////////////////
        
-        string dataFileLoc = "./samples/",
-               systFileLoc = "./samples/";
+        string dataFileLoc = "./samples/2012_combined_EACMLB.root",
+               systFileLoc = "./samples/calibration_19.700000762939453.root";
         
         vector<float> mcSigTemplVal;
         
