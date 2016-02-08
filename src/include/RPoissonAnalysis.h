@@ -43,7 +43,7 @@ class RPoissonAnalysis
 {
     //friend class RPoissonFitHandler;
 
-    private:
+    public:
         /////////////
         // Methods //
         /////////////
@@ -85,7 +85,7 @@ class RPoissonAnalysis
         vector<double> chiSquared;
         
         //
-        int fittedTempl;        
+        int fittedTempl = -1;        
 
         //
         float fitVal,
@@ -128,8 +128,8 @@ class RPoissonAnalysis
         TH1F *hFitFailed,
              *hFitFailedDiff;
 
-        int  nFitFailed,
-             nFitTried;
+        int  nFitFailed = 0,
+             nFitTried  = 0;
 
         TGraph *gr;
         TGraphErrors *grc;
@@ -167,6 +167,7 @@ class RPoissonAnalysis
         ~RPoissonAnalysis() {};
 
         // utils
+        void setup();
         void run(char* dataFileName);
         void save(char* outFileName);
 
@@ -200,7 +201,7 @@ class RPoissonAnalysis
         string dataFileLoc = "./samples/2012_combined_EACMLB.root",
                systFileLoc = "./samples/calibration_19.700000762939453.root";
         
-        vector<float> mcSigTemplVal;
+        vector<float> mcSigTemplVal = { 1.50, 3.00, 4.50, 6.00, 7.50 };
         
         // whether to use systematics, PDF version
         //

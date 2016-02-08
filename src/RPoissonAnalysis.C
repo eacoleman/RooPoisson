@@ -12,6 +12,10 @@ using namespace RooFit;
 
 RPoissonAnalysis::RPoissonAnalysis() {
 
+}
+
+void RPoissonAnalysis::setup() {
+
     //
     TStyleHandler::setTDRStyle();
 
@@ -58,7 +62,6 @@ RPoissonAnalysis::RPoissonAnalysis() {
 
     //
     char dataHistoName[20] = "PeakMassTree_";
-    char histoName[20]     = "mlbwa_";
     char evHistoName[15]   = "h_nEvents";
 
     //
@@ -86,7 +89,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
     for (int ihisto = 0; ihisto < processes.size(); ++ihisto) {
         // get the data histograms
         sprintf(sname, "%s"        , processes.at(ihisto).c_str());
-        sprintf(hname, "%s_Data_%s", histoName, processes.at(ihisto).c_str());
+        sprintf(hname, "%s__Data_%s", sAcro.c_str(), processes.at(ihisto).c_str());
         cout << hname << endl;
 
         datasets[sname] = (TH1F*) gDirectory->Get(hname);
@@ -124,6 +127,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
 
     // open data file
     theFile = new TFile (dataFileLoc.c_str());
+    theFile->cd();
 
     // loop through the interaction types we want to check
     for (int itype = 0; itype < processes.size(); ++itype) {
@@ -132,7 +136,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
         for (unsigned int iVal = 0; iVal <  mcSigTemplVal.size(); ++iVal) {
 
             // get the histogram for the interaction and propVal we want
-            sprintf(hname, "mlbwa__TTbar_%.2f_%s", mcSigTemplVal.at(iVal), processes.at(itype).c_str());
+            sprintf(hname, "%s__TTbar_%.2f_%s", sAcro.c_str(), mcSigTemplVal.at(iVal), processes.at(itype).c_str());
             sprintf(tag  , "%s%.2f"              , processes.at(itype).c_str()   , mcSigTemplVal.at(iVal));
             cout << " - signal template: " << hname << " " << tag << endl;
 
@@ -177,10 +181,10 @@ RPoissonAnalysis::RPoissonAnalysis() {
                 // get the histogram name
                 if (systematicsPDF) {
                     sprintf(tag,"%s_pdf%i",processes.at(itype).c_str(),i);
-                    sprintf(hname,"%s_%s_pdf%i", histoName, processes.at(itype).c_str(),i);
+                    sprintf(hname,"%s__%s_pdf%i", sAcro.c_str(), processes.at(itype).c_str(),i);
                 } else {
                     sprintf(tag,"%s%.2f",processes.at(itype).c_str(),tVal);
-                    sprintf(hname, "mlbwa__TTbar_%.2f_%s",tVal, processes.at(itype).c_str());
+                    sprintf(hname, "%s__TTbar_%.2f_%s", sAcro.c_str(), tVal, processes.at(itype).c_str());
                 }
 
                 // get the histogram and store in mcSigHistos_gen
@@ -204,6 +208,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
 
     // open the histogram file
     theFile = new TFile (dataFileLoc.c_str());
+    theFile->cd();
 
     // iterate through types
     for (int itype = 0; itype < processes.size(); ++itype) {
@@ -211,7 +216,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
         //iterate through background MC types
         for (unsigned int bkgType = 0; bkgType < mcBkgLabels.size(); ++bkgType) {
             // format the name of the histo we want to get
-            sprintf(hname, "mlbwa__%s_%s", mcBkgLabels.at(bkgType).Data(), 
+            sprintf(hname, "%s__%s_%s", sAcro.c_str(), mcBkgLabels.at(bkgType).Data(), 
                     processes.at(itype).c_str());
             
             // 
@@ -219,7 +224,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
 
             //
             if (histo == 0) { 
-                cout << " - WARNING: histo does not exist! \n";
+                cout << " - WARNING: histo " << hname << " does not exist! \n";
                 histo = new TH1F(hname, hname, 100, 0, 200); 
             }
 
@@ -258,7 +263,7 @@ RPoissonAnalysis::RPoissonAnalysis() {
             // iterate through types
             for (int itype = 0; itype < processes.size(); ++itype) {
                 //format the name of the histo we want to get
-                sprintf(hname, "mlbwa__%s_%s", mcBkgLabels.at(i).Data(), 
+                sprintf(hname, "%s__%s_%s", sAcro.c_str(), mcBkgLabels.at(i).Data(), 
                         processes.at(itype).c_str());
                 cout << hname << endl;
 
@@ -436,7 +441,14 @@ RPoissonAnalysis::RPoissonAnalysis() {
     toyError = 0;
     toyLL    = new TH2F("LL", "LL residuals", 9, minPropVal, maxPropVal,                            //HARDCODED
                         200, -100, 100);                                                            //HARDCODED
-
+    
+    if (!useRatio) {
+        for (int itype = 0 ; itype < processes.size(); ++itype) {
+            sprintf(hname,"nbrBkgEvts%s", processes.at(itype).c_str());
+            workspace->var(hname)->setVal(mcTotalBkgHistosScaled[processes.at(itype)]->Integral());
+            workspace->var(hname)->setConstant(1);
+        }
+    }
 }
 
 
@@ -658,7 +670,7 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
         int countFailures = 0;
         do {
             // get the result of the experiment
-            do { j = generateToy(iTemplate);} while (j==0);
+            do { j = generateToy(iTemplate); } while ( j == 0 );
 
             stat = fitAll();
             if (stat !=0) {
@@ -674,21 +686,21 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
         }
 
         nFitFailed += countFailures;
-
-        pair<double,double> result = minimize(true);
-        if (result.second >= 0.) {
+        cout << "EAC683" << endl;
+        pair<double,double> result = minimize(true);cout << "EAC684" << endl;
+        if (result.second >= 0.) {cout << "EAC685" << endl;
             cout << " - fake fit result: " << result.first 
                  << " +/- " << result.second << endl;
-
+            cout << "EAC688" << endl;
             // fill the toy histograms with the result of our pseudoexperiment
-            toyMean->Fill(result.first);
-            toyBias->Fill(result.first-propPoint);
-            toyPull->Fill((propPoint-result.first)/result.second);
-            toyError->Fill(result.second);
+            toyMean->Fill(result.first);cout << "EAC690" << endl;
+            toyBias->Fill(result.first-propPoint);cout << "EAC691" << endl;
+            toyPull->Fill((propPoint-result.first)/result.second);cout << "EAC692" << endl;
+            toyError->Fill(result.second); cout << "EAC693" << endl;
         } else {
             ++nFitFailed;
         }
-
+        cout << "EAC697" << endl;
         ++nFitTried;
     }
 
@@ -802,8 +814,8 @@ int RPoissonAnalysis::fitAll() {
     chiSquared.resize(mcSigTemplVal.size()+1);
 
     // fit a model for each propVal
-    for (int i = 0; i <= mcSigTemplVal.size(); ++i) {
-        chiSquared.at(i) = fitPoint(i);
+    for (int i = 0; i < mcSigTemplVal.size(); ++i) {
+        chiSquared.at(i) = fitPoint(i); cout << "EAC812" << endl;
         if (std::isinf(chiSquared.at(i)) || std::isnan(chiSquared.at(i))) return 1;
     }
 
@@ -812,20 +824,20 @@ int RPoissonAnalysis::fitAll() {
 
 
 pair<double,double> RPoissonAnalysis::minimize(bool fake,
-                                                 bool all = true, 
-                                                 int  pointsToUse = 2) {
+                                               bool all = true, 
+                                               int  pointsToUse = 2) {
     //
     int    pts   = 0;
-    double minLL = std::numeric_limits<double>::infinity();
-
+    double minLL = std::numeric_limits<double>::infinity();   
+    cout << "EAC826 " << chiSquared.size() << endl;
     //
-    for (int i = 0; i < mcSigTemplVal.size(); ++i) {
+    for (int i = 0; i < mcSigTemplVal.size(); ++i) { cout << " EAC" << i << endl;
         if (chiSquared.at(i) >= 0) {
             ++pts;
-            chiSquared.assign(i, min(chiSquared.at(i), minLL));
+            minLL = min(chiSquared[i], minLL);
         }
     }
-
+    cout << "834" << endl;
     //
     TVectorD x(pts), ex(pts),
              y(pts), ey(pts);
@@ -835,7 +847,7 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
     int failures = 0;
 
     //
-    for (int i = 0; i <= mcSigTemplVal.size(); ++i) {
+    for (int i = 0; i < mcSigTemplVal.size(); ++i) {
         if (chiSquared.at(i) >= 0){
             x[pts]  = mcSigTemplVal.at(i);
             y[pts]  = chiSquared.at(i) - minLL;
@@ -875,7 +887,7 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
     gr = new TGraphErrors(x, y, ex, ey);
     gr->SetName("gr");
     gr->Fit("pol2", "Q", "", mcSigTemplVal.at(min), mcSigTemplVal.at(max));
-    gr->GetXaxis()->SetTitle("mlbwa  m(lb) [GeV]");
+    gr->GetXaxis()->SetTitle("mlbwa  m(lb) [GeV]"); //HARDCODED
     gr->GetYaxis()->SetTitle("-log (L/L_{max})");
     gr->GetYaxis()->SetTitleOffset(1.25);
 
@@ -893,7 +905,7 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
     if (failures) cout << " - fits failed: " << failures << endl;
 
     // 
-    for (int i = 0; i <= mcSigTemplVal.size(); ++i) {
+    for (int i = 0; i < mcSigTemplVal.size(); ++i) {
         if (chiSquared.at(i) >= 0){
             //
             toyLL->Fill(i,gr->GetFunction("pol2")->Eval(mcSigTemplVal.at(i))
@@ -927,7 +939,8 @@ void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
 
     // initialize arrays for storing fit likelihoods
     int min = 0; 
-    int max = mcSigTemplVal.size() - 1;
+    int max = mcSigTemplVal.size();
+    cout << " min = " << min << " and max = " << max << endl;
 
     TVectorD x(max-min+1), ex(max-min+1),
              y(max-min+1), ey(max-min+1);
@@ -949,17 +962,20 @@ void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
 
     // loop over templates
     for (i = min; i < max; ++i) {
+        cout << "doing toy " << i << endl;
         // get the toy statistics and fit them with a gaussian
-        doToys(numberOfExps, i);
-        toyMean->Fit("gaus");
+        doToys(numberOfExps, i); cout << "EAC961 " << toyMean->GetEntries() << endl;
+        toyMean->Fit("gaus"); cout << "EAC962" << endl;
 
         // store the points for bias plot
         x[pts]  = mcSigTemplVal.at(i); 
-        y[pts]  = toyMean->GetFunction("gaus")->GetParameter(1);
+        y[pts]  = toyMean->GetFunction("gaus")->GetParameter(1);cout << "EAC966" << endl;
 
         // store the point errors for bias plot
         ex[pts] = 0.;
         ey[pts] = toyMean->GetFunction("gaus")->GetParameter(2)/sqrt(numberOfExps);
+
+        cout << " - y pts is " << y[pts] << endl;
 
         ++pts;
 
@@ -1026,7 +1042,10 @@ void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
 }
 
 void RPoissonAnalysis::run(char* dataFileName) {
-
+    setup();
+    runCalibration(1000);
+    fitAll();
+    minimize(false);
 }
 
 void RPoissonAnalysis::save(char* outFileName) {
