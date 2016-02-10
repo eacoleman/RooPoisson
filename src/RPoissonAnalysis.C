@@ -1028,15 +1028,15 @@ void RPoissonAnalysis::calibrate() {
           hname[50];
     int   minP   = (calibLastPts ? 0 : 1),
           maxP   = mcSigTemplVal.size() - (calibLastPts ? 1 : 2);
-    int   points = maxP - minP + 1
+    int   points = maxP - minP + 1;
     float tMinPVal = mcSigTemplVal.at(minP), 
           tMaxPVal = mcSigTemplVal.at(maxP);
 
     // initialize arrays for statistics
     TVectorD propV(points),  propErrV(points),
              meanV(points),  meanErrV(points),
-             biasV(points),  biasErrV(points)
-             pullV(points),  pullErrV(points)
+             biasV(points),  biasErrV(points),
+             pullV(points),  pullErrV(points),
              pullWV(points), pullWErrV(points);
 
     // loop through our min and max points
