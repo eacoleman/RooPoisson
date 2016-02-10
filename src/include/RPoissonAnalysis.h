@@ -67,7 +67,7 @@ class RPoissonAnalysis
                                       int  pointsToUse = 2);
 
         void getCalibration(int numberOfExps = 1000);
-        void calibrate();
+        void calibrate(char tag[20]);
 
         ///////////////////////
         // Utility variables //

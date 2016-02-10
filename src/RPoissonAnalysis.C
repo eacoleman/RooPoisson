@@ -928,7 +928,7 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
     cout << name << endl;
 
     // open the outfile
-    TFile * out = new TFile(name + ".root", "RECREATE");
+    TFile * out = new TFile(systFileLoc, "RECREATE");
     cout << " - opened output file with name " << name << endl;
 
     // loop over templates
@@ -1013,16 +1013,17 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
 }
 
 
-void RPoissonAnalysis::calibrate() {
+void RPoissonAnalysis::calibrate(char tag[20]) {
     float fitUnc  = 0.16; // TODO: what is this doing here?                                         //HARDCODED REDALERT
     float nomPVal = mcSigTemplVal.at(nomTemplIndex);
+    int iPeriod = 7;
 
     // reset and stylize the canvas
     c_min = new TCanvas("c_min","", 600, 600);                                                      //HARDCODED
     TStyleHandler::initStyle(c_min);
 
     // initialize helper variables
-    TFile* theFile = new TFile (fn);
+    TFile* theFile = new TFile(systFileLoc);
 
     char  name[200], 
           hname[50];
