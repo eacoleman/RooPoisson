@@ -66,7 +66,8 @@ class RPoissonAnalysis
                                       bool all = true,
                                       int  pointsToUse = 2);
 
-        void runCalibration(int numberOfExps = 1000);
+        void getCalibration(int numberOfExps = 1000);
+        void calibrate();
 
         ///////////////////////
         // Utility variables //
@@ -210,6 +211,7 @@ class RPoissonAnalysis
         bool useRatio        = true;
         bool fixedSample     = true;
         bool bkgSyst         = false;
+        bool calibLastPts    = false;
 
         // cut information
         float upperCut       = 400.;

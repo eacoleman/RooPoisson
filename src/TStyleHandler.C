@@ -323,7 +323,27 @@ TStyle* TStyleHandler::setTDRStyle() {
 }
 
 
-void TStyleHandler::setStyle(TPad *tPad, int tPeriod, int tPosX) {
-    CMS_lumi(tPad, tPeriod, tPosX);
-    setTDRStyle();
+void TStyleHandler::initStyle(TPad *tPad) {
+    int W = 800;                                                                                    //HARDCODED
+    int H = 600;                                                                                    //HARDCODED
+    int H_ref = 600;                                                                                //HARDCODED
+    int W_ref = 800;                                                                                //HARDCODED
+
+    // references for T, B, L, R
+    float T = 0.08*H_ref;
+    float B = 0.12*H_ref; 
+    float L = 0.16*W_ref;
+    float R = 0.04*W_ref;
+
+    // setup a new canvas
+    tPad->SetFillColor(0);
+    tPad->SetBorderMode(0);
+    tPad->SetFrameFillStyle(0);
+    tPad->SetFrameBorderMode(0);
+    tPad->SetLeftMargin( L/W );
+    tPad->SetRightMargin( R/W );
+    tPad->SetTopMargin( T/H );
+    tPad->SetBottomMargin( B/H );
+    tPad->SetTickx(0);
+    tPad->SetTicky(0);
 }

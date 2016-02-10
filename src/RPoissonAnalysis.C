@@ -15,41 +15,13 @@ RPoissonAnalysis::RPoissonAnalysis() {
 }
 
 void RPoissonAnalysis::setup() {
+    //
+    sort(mcSigTemplVal.begin(), mcSigTemplVal.end());
 
     //
     TStyleHandler::setTDRStyle();
-
-    int W = 800;                                                                                    //HARDCODED
-    int H = 600;                                                                                    //HARDCODED
-
-    // Simple example of macro: plot with CMS name and lumi text
-    //  (this script does not pretend to work in all configurations)
-    // iPeriod = 1*(0/1 7 TeV) + 2*(0/1 8 TeV)  + 4*(0/1 13 TeV) 
-    // For instance: 
-    //               iPeriod = 3 means: 7 TeV + 8 TeV
-    //               iPeriod = 7 means: 7 TeV + 8 TeV + 13 TeV 
-    // Initiated by: Gautier Hamel de Monchenault (Saclay)
-    int H_ref = 600;                                                                                //HARDCODED
-    int W_ref = 800;                                                                                //HARDCODED
-
-    // references for T, B, L, R
-    float T = 0.08*H_ref;
-    float B = 0.12*H_ref; 
-    float L = 0.16*W_ref;
-    float R = 0.04*W_ref;
-
-    // setup a new canvas
     c_min = new TCanvas("c_min","", 600, 600);                                                      //HARDCODED
-    c_min->SetFillColor(0);
-    c_min->SetBorderMode(0);
-    c_min->SetFrameFillStyle(0);
-    c_min->SetFrameBorderMode(0);
-    c_min->SetLeftMargin( L/W );
-    c_min->SetRightMargin( R/W );
-    c_min->SetTopMargin( T/H );
-    c_min->SetBottomMargin( B/H );
-    c_min->SetTickx(0);
-    c_min->SetTicky(0);
+    TStyleHandler::initStyle(c_min);
 
     // initialize some helper variables
     nFitTried      = 0;
@@ -61,7 +33,6 @@ void RPoissonAnalysis::setup() {
     nTotSample.resize(processes.size());
 
     //
-    char dataHistoName[20] = "PeakMassTree_";
     char evHistoName[15]   = "h_nEvents";
 
     //
@@ -544,7 +515,7 @@ int RPoissonAnalysis::generateToy(int templToUse) {
                  << endl;
 
         } else {
-            sprintf(tag, "%s%.2f", processes.at(itype).c_str(), mcSigTemplVal[4]);                  //HARDCODED REDALERT
+            sprintf(tag, "%s%.2f", processes.at(itype).c_str(), mcSigTemplVal[nomTemplIndex]);
 
             int binLow  = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(lowerCut);
             int binHigh = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(upperCut);
@@ -887,7 +858,7 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
     gr = new TGraphErrors(x, y, ex, ey);
     gr->SetName("gr");
     gr->Fit("pol2", "Q", "", mcSigTemplVal.at(min), mcSigTemplVal.at(max));
-    gr->GetXaxis()->SetTitle("mlbwa  m(lb) [GeV]"); //HARDCODED
+    gr->GetXaxis()->SetTitle("mlbwa  m(lb) [GeV]");                                                 //HARDCODED
     gr->GetYaxis()->SetTitle("-log (L/L_{max})");
     gr->GetYaxis()->SetTitleOffset(1.25);
 
@@ -928,9 +899,9 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
                                1/sqrt(2*a));
 }
 
-void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
+void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
     // keep track of timing
-    time_t start, end;
+    time_t start, endLoop, end;
     time   (&start);
 
     // keep track of our fit success/failure rates
@@ -969,7 +940,7 @@ void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
 
         // store the points for bias plot
         x[pts]  = mcSigTemplVal.at(i); 
-        y[pts]  = toyMean->GetFunction("gaus")->GetParameter(1);cout << "EAC966" << endl;
+        y[pts]  = toyMean->GetFunction("gaus")->GetParameter(1); cout << "EAC966" << endl;
 
         // store the point errors for bias plot
         ex[pts] = 0.;
@@ -1041,12 +1012,263 @@ void RPoissonAnalysis::runCalibration(int numberOfExps = 1000) {
             dif , dif/numberOfExps);
 }
 
+
+void RPoissonAnalysis::calibrate() {
+    float fitUnc  = 0.16; // TODO: what is this doing here?                                         //HARDCODED REDALERT
+    float nomPVal = mcSigTemplVal.at(nomTemplIndex);
+
+    // reset and stylize the canvas
+    c_min = new TCanvas("c_min","", 600, 600);                                                      //HARDCODED
+    TStyleHandler::initStyle(c_min);
+
+    // initialize helper variables
+    TFile* theFile = new TFile (fn);
+
+    char  name[200], 
+          hname[50];
+    int   minP   = (calibLastPts ? 0 : 1),
+          maxP   = mcSigTemplVal.size() - (calibLastPts ? 1 : 2);
+    int   points = maxP - minP + 1
+    float tMinPVal = mcSigTemplVal.at(minP), 
+          tMaxPVal = mcSigTemplVal.at(maxP);
+
+    // initialize arrays for statistics
+    TVectorD propV(points),  propErrV(points),
+             meanV(points),  meanErrV(points),
+             biasV(points),  biasErrV(points)
+             pullV(points),  pullErrV(points)
+             pullWV(points), pullWErrV(points);
+
+    // loop through our min and max points
+    for (int i = minP; i <= maxP; ++i) {
+        float propVal = mcSigTemplVal.at(i);
+
+        // collect the calibration histograms for this template
+        sprintf(hname,"meanMass_%.2f", propVal);
+        TH1F* toyMean  = (TH1F*) gDirectory->Get(hname);
+
+        sprintf(hname,"biasMass_%.2f", propVal);
+        TH1F* toyBias  = (TH1F*) gDirectory->Get(hname) ;
+
+        sprintf(hname,"errMass_%.2f", propVal);
+        TH1F* toyError = (TH1F*) gDirectory->Get(hname) ;
+
+        sprintf(hname,"pullMass_%.2f", propVal);
+        TH1F* toyPull  = (TH1F*) gDirectory->Get(hname) ;
+
+        // fit out plots with proper gaussians
+        toyMean->Fit("gaus","Q");
+        toyBias->Fit("gaus","Q");
+        toyPull->Rebin(5);
+        toyPull->Fit("gaus","Q");
+
+        // save statistics in arrays
+        propV(i)     = propVal;
+        meanV(i)     = toyMean->GetFunction("gaus")->GetParameter(1);
+        biasV(i)     = toyBias->GetFunction("gaus")->GetParameter(1);
+        pullV(i)     = toyPull->GetFunction("gaus")->GetParameter(1);
+        pullWV(i)    = toyPull->GetFunction("gaus")->GetParameter(2);
+
+        propErrV(i)  = 0.;
+        meanErrV(i)  = toyBias->GetFunction("gaus")->GetParameter(2)/sqrt(1);
+        biasErrV(i)  = toyBias->GetFunction("gaus")->GetParameter(2)/sqrt(1);
+        pullErrV(i)  = toyPull->GetFunction("gaus")->GetParError(1)/sqrt(1);
+        pullWErrV(i) = toyPull->GetFunction("gaus")->GetParError(2)/sqrt(1);
+
+        // report this template information
+        cout << " _ Template " << sProp << ": " << propVal << endl;
+        cout << "     " << sProp << ": " << meanV[i] << " +/- " << meanErrV[i] << endl;
+        cout << "\t  -  unc: "   << toyError->GetMean();
+        cout << "\t  - pull: "   << pullV[i] << " / " << pullWV[i] << endl;
+    }
+
+    // propVal plot & fit
+    gStyle->SetOptStat(0);
+    gStyle->SetOptFit(0);
+    TGraphErrors *propGraph = new TGraphErrors(propV, meanV, propErrV, meanErrV);
+    propGraph->SetName("propGraph");
+    TF1* meanFit = new TF1("meanFit","pol1", tMinPVal-10, tMaxPVal+10);
+    meanFit->SetLineStyle(1);
+    propGraph->Fit("meanFit");
+    TF1* f2 = new TF1("f2","pol1", tMinPVal-10, tMaxPVal+10);
+    f2->SetParameter(0,0.);
+    f2->SetParameter(1,1.);
+    f2->SetLineColor(4);
+    propGraph->GetXaxis()->SetNdivisions(50205);
+    propGraph->GetXaxis()->SetTitle("Generated mass [GeV]");
+    propGraph->GetYaxis()->SetTitleOffset(1.22);
+    propGraph->GetYaxis()->SetTitle("Estimated mass [GeV]");
+    propGraph->Draw("apz");
+    f2->Draw("same");
+    TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
+    sprintf(hname,"cal_%s_%s.pdf", sProp.c_str(), tag);
+    c_min->Print(hname);
+    sprintf(hname,"cal_%s_%s.C"  , sProp.c_str(), tag);
+    c_min->Print(hname);
+    sprintf(hname,"cal_%s_%s.png", sProp.c_str(), tag);
+    c_min->Print(hname);
+
+    // Pull plot & fit
+    gStyle->SetOptStat(0);
+    gStyle->SetOptFit(0);
+    TGraphErrors *pullGraph = new TGraphErrors(propV, pullV, propErrV, pullErrV);
+    pullGraph->SetName("pullGraph");
+    TF1* pullFit = new TF1("pullFit","pol0", tMinPVal-10, tMaxPVal+10);
+    pullGraph->Fit("pullFit");
+    TF1* f3 = new TF1("f3","pol1", tMinPVal-10, tMaxPVal+10);
+    f3->SetParameter(0,0.);
+    f3->SetParameter(1,0.);
+    f3->SetLineColor(4);
+    pullGraph->SetMinimum(-1);
+    pullGraph->SetMaximum(+1);
+    pullGraph->GetXaxis()->SetNdivisions(50205);
+    pullGraph->GetXaxis()->SetTitle("Generated mass [GeV]");
+    pullGraph->GetYaxis()->SetTitleOffset(1.22);
+    pullGraph->GetYaxis()->SetTitle("pull mean [GeV]");
+    pullGraph->Draw("apz");
+    f3->Draw("same");
+    TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
+    sprintf(hname,"cal_pull_%s.pdf", tag);
+    c_min->Print(hname);
+    sprintf(hname,"cal_pull_%s.C"  , tag);
+    c_min->Print(hname);
+    sprintf(hname,"cal_pull_%s.png", tag);
+    c_min->Print(hname);
+
+    TGraphErrors *pullWGraph = new TGraphErrors(propV, pullWV, propErrV, pullWErrV);
+    pullWGraph->SetName("pullWGraph");
+    TF1* f4 = new TF1("f3","pol1", tMinPVal-10, tMaxPVal+10);
+    f4->SetParameter(0,1.);
+    f4->SetParameter(1,0.);
+    f4->SetLineColor(4);
+    f4->SetLineStyle(2);
+    TF1* pullWFit = new TF1("pullWFit","pol0", tMinPVal-10, tMaxPVal+10);
+    pullWGraph->GetXaxis()->SetNdivisions(50205);
+    pullWGraph->GetXaxis()->SetTitle("Generated width [GeV]");
+    pullWGraph->GetYaxis()->SetTitleOffset(1.22);
+    pullWGraph->GetYaxis()->SetTitle("Pull width");
+    pullWGraph->SetMinimum(0.75);
+    pullWGraph->SetMaximum(1.25);
+    pullWGraph->Draw("apz");
+    f4->Draw("same");
+    TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
+    sprintf(hname,"cal_pullW_%s.pdf", tag);
+    c_min->Print(hname);
+    sprintf(hname,"cal_pullW_%s.C"  , tag);
+    c_min->Print(hname);
+    sprintf(hname,"cal_pullW_%s.png", tag);
+    c_min->Print(hname);
+
+    // bias plot & fit
+    TGraphErrors *biasGraph = new TGraphErrors(propV, biasV, propErrV, biasErrV);
+    biasGraph->SetName("biasGraph");
+    TF1* biasFit = new TF1("biasFit","pol1",tMinPVal-10, tMaxPVal+10);
+    biasGraph->Fit("biasFit");
+    f3->SetLineStyle(2);
+    biasGraph->GetXaxis()->SetNdivisions(50205);
+    biasGraph->GetXaxis()->SetTitle("Generated width [GeV]");
+    biasGraph->GetYaxis()->SetTitleOffset(1.22);
+    biasGraph->GetYaxis()->SetTitle("Bias [GeV]");
+    biasGraph->SetMinimum(-0.5);
+    biasGraph->SetMaximum(+0.5);
+    biasGraph->Draw("apz");
+    TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
+    sprintf(hname,"cal_bias_%s.pdf", tag);
+    c_min->Print(hname);
+    sprintf(hname,"cal_bias_%s.C", tag);
+    c_min->Print(hname);
+    sprintf(hname,"cal_bias_%s.png", tag);
+    c_min->Print(hname);
+
+    // TODO: keep this? Make optional?
+    // begin printing nominal information
+    cout << "Properties at " << nomPVal << ": " << endl;
+    
+    // save propVal error at nominal
+    gStyle->SetOptStat(0);
+    gStyle->SetOptFit(kTRUE);
+    sprintf(hname,"errMass_%.2f", nomPVal);
+    TH1F* toyErr = (TH1F*) gDirectory->Get(hname);
+    cout << "Toy err is "<<toyErr<<endl;
+    toyErr->GetXaxis()->SetTitle("Uncertainty [GeV]");
+    toyErr->GetXaxis()->SetNdivisions(505);
+    toyErr->GetYaxis()->SetTitleOffset(1.4);
+    toyErr->Draw();
+    TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
+    sprintf(hname,"errMass_%.2f_%s.pdf", nomPVal, tag);
+    c_min->Print(hname);
+    sprintf(hname,"errMass_%.2f_%s.C", nomPVal, tag);
+    c_min->Print(hname);
+    sprintf(hname,"errMass_%.2f_%s.png", nomPVal, tag);
+    c_min->Print(hname);
+    cout << "Mean uncertainty "<< toyErr->GetMean() << endl;
+
+    // save mean propVal at nominal
+    gStyle->SetOptFit(1111);
+    sprintf(hname,"meanMass_%.2f", nomPVal);
+    TH1F* toyMean = (TH1F*) gDirectory->Get(hname) ;
+    toyMean->Fit("gaus","Q");
+    toyMean->GetXaxis()->SetTitle("Mass [GeV]");
+    toyMean->GetYaxis()->SetTitleOffset(1.2);
+    toyMean->GetYaxis()->SetTitle("Events/bin");
+    toyMean->Draw();
+    TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
+    sprintf(hname,"meanMass_%.2f_%s.pdf", nomPVal, tag);
+    c_min->Print(hname);
+    sprintf(hname,"meanMass_%.2f_%s.C", nomPVal, tag);
+    c_min->Print(hname);
+    sprintf(hname,"meanMass_%.2f_%s.png", nomPVal, tag);
+    c_min->Print(hname);
+
+    // save propVal pull at nominal
+    gStyle->SetOptFit(1111);
+    sprintf(hname,"pullMass_%.2f", nomPVal);
+    TH1F* toyPull  = (TH1F*) gDirectory->Get(hname) ;
+    toyPull->Fit("gaus","Q");
+    toyPull->GetXaxis()->SetTitle("Pull");
+    toyPull->GetYaxis()->SetTitle("Events/bin");
+    toyPull->GetYaxis()->SetTitleOffset(1.4);
+    toyPull->Draw();
+    TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
+    sprintf(hname,"pullMass_%.2f_%s.pdf", nomPVal, tag);
+    c_min->Print(hname);
+    sprintf(hname,"pullMass_%.2f_%s.C", nomPVal, tag);
+    c_min->Print(hname);
+    sprintf(hname,"pullMass_%.2f_%s.png", nomPVal, tag);
+    c_min->Print(hname);
+
+    // calculate final results from fit parameters
+    cout << " - performing inversion...\n\n";
+    float a = meanFit->GetParameter(1);
+    float b = meanFit->GetParameter(0);
+    float ae = meanFit->GetParError(1);
+    float be = meanFit->GetParError(0);
+    float err = sqrt(ae*ae*((fitVal-b)/(a*a))*((fitVal-b)/(a*a)) + be*be/(a*a));
+    calVal = (fitVal-b)/a;
+
+    // report results 
+    cout << a << " " << b << endl;
+    cout << " - template "   << sProp << ": " << fitVal << " - Fit: " << a 
+                                              << " / " << b << endl;
+    cout << " - calibrated " << sProp << ": " << (fitVal-b)/a << endl;
+    cout << " - calibrated error: "    << err << endl;
+    cout << " - pull at "              << nomPVal << ": " << pullWFit->Eval(nomPVal) << endl;
+    cout << " - calibrated stat unc: " << pullWFit->Eval(nomPVal)*fitUnc << endl;
+
+    theFile->Close();
+}
+
+
 void RPoissonAnalysis::run(char* dataFileName) {
     setup();
-    runCalibration(1000);
+
     fitAll();
     minimize(false);
+
+    getCalibration(1000);
+    calibrate();
 }
+
 
 void RPoissonAnalysis::save(char* outFileName) {
 

@@ -69,7 +69,7 @@ class TStyleHandler
         static void CMS_lumi(TPad* pad, int iPeriod, int iPosX);
         static TStyle* setTDRStyle();
 
-        static void setStyle(TPad *pad, int iPeriod, int iPosX);
+        static void initStyle(TPad *pad);
 
 };
 
