@@ -169,7 +169,7 @@ class RPoissonAnalysis
 
         // utils
         void setup();
-        void run(char* dataFileName);
+        void run();
         void save(char* outFileName);
 
 
@@ -211,7 +211,7 @@ class RPoissonAnalysis
         bool useRatio        = true;
         bool fixedSample     = true;
         bool bkgSyst         = false;
-        bool calibLastPts    = false;
+        bool calibLastPts    = true;
 
         // cut information
         float upperCut       = 400.;
@@ -225,6 +225,7 @@ class RPoissonAnalysis
         // what is the index of the nominal template
         // in mcSigTemplVal?
         int nomTemplIndex    = 0;
+        int nPseudoexperiments = 100;
 
         // antiquated - consider removing
         int fixBkg           = 3;

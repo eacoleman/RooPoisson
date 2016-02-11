@@ -134,8 +134,8 @@ void RPoissonAnalysis::setup() {
     // plot the systematics GEN templates if they are available
     if (systematics) {
         cout << " - retrieved systematics signal GEN template from " 
-             << systFileLoc << endl;
-        theFile = new TFile (systFileLoc.c_str()) ;
+             << dataFileLoc << endl;
+        theFile = new TFile (dataFileLoc.c_str()) ;
 
         unsigned int maxTemplates;
         if (systematicsPDF) maxTemplates = 41;                                                      //HARDCODED
@@ -225,8 +225,8 @@ void RPoissonAnalysis::setup() {
     if (systematics) {
         //
         cout << " - retrieving systematics background GEN template from "
-             << systFileLoc << endl;
-        theFile = new TFile (systFileLoc.c_str());
+             << dataFileLoc << endl;
+        theFile = new TFile (dataFileLoc.c_str());
 
         // iterate through the background MC types
         for (unsigned int i = 0; i < mcBkgLabels.size(); ++i) {
@@ -343,8 +343,8 @@ void RPoissonAnalysis::setup() {
                                              mcSigTemplHistosScaled_gen[tag])));
 
                 //
-                sprintf(hname,"HistPdf::signal_gen%s%.2f(propVal,histo_sgn_gen%s%.2f)",
-                        processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), tVal);
+                sprintf(hname,"HistPdf::signal_gen%s%.2f(%s,histo_sgn_gen%s%.2f)",
+                        processes.at(itype).c_str(), tVal, sProp.c_str(), processes.at(itype).c_str(), tVal);
                 workspace->factory(hname);
             }
 
@@ -556,7 +556,7 @@ int RPoissonAnalysis::generateToy(int templToUse) {
         }
 
         if (systematics) {
-
+            // EAC EDIT signal_gen
             if (!systematicsPDF) sprintf(hname,"signal_gen%s%.2f", 
                                          processes.at(itype).c_str(),
                                          mcSigTemplVal[templToUse]);
@@ -567,7 +567,7 @@ int RPoissonAnalysis::generateToy(int templToUse) {
                     mcSigTemplVal[templToUse]);
         }
 
-        cout << hname << endl;
+        cout << hname << endl; 
         datasets[processes.at(itype)] 
             = workspace->pdf(hname)->generateBinned(*propVal, 
                                                     genSig[processes.at(itype)])->createHistogram(hname,*propVal);
@@ -928,7 +928,7 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
     cout << name << endl;
 
     // open the outfile
-    TFile * out = new TFile(systFileLoc, "RECREATE");
+    TFile * out = new TFile(systFileLoc.c_str(), "RECREATE");
     cout << " - opened output file with name " << name << endl;
 
     // loop over templates
@@ -1013,17 +1013,17 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
 }
 
 
-void RPoissonAnalysis::calibrate(char tag[20]) {
+void RPoissonAnalysis::calibrate(char tag[20] = "") {
     float fitUnc  = 0.16; // TODO: what is this doing here?                                         //HARDCODED REDALERT
     float nomPVal = mcSigTemplVal.at(nomTemplIndex);
-    int iPeriod = 7;
+    int iPeriod = 4;
 
     // reset and stylize the canvas
     c_min = new TCanvas("c_min","", 600, 600);                                                      //HARDCODED
     TStyleHandler::initStyle(c_min);
 
     // initialize helper variables
-    TFile* theFile = new TFile(systFileLoc);
+    TFile* theFile = new TFile(systFileLoc.c_str());
 
     char  name[200], 
           hname[50];
@@ -1260,13 +1260,13 @@ void RPoissonAnalysis::calibrate(char tag[20]) {
 }
 
 
-void RPoissonAnalysis::run(char* dataFileName) {
+void RPoissonAnalysis::run() {
     setup();
 
     fitAll();
     minimize(false);
 
-    getCalibration(1000);
+    getCalibration(nPseudoexperiments);
     calibrate();
 }
 
