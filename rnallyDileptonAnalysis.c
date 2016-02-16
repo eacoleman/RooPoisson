@@ -1,23 +1,39 @@
-#include "src/RPoissonAnalysis.C"
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * rnallyDileptonAnalysis.c                                                    *
+ * Richard Nally's 2015 analysis of the top quark mass, in cleaner code format.*
+ *                                                                             *
+ * Author: Evan Coleman                                                        *
+ * Date:   February 2016                                                       *
+ *                                                                             *
+ * To run: root -l rnallyDileptonAnalysis.c                                    *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+#include "src/RPoissonAnalysis.C"
 
 void rnallyDileptonAnalysis()
 {
     
     // Create the analysis
-    ///gROOT->ProcessLine(".L src/RPoissonAnalysis.C");
     RPoissonAnalysis *r = new RPoissonAnalysis();
 
+    //////////////////////////
+    // Preliminary Settings //
+    //////////////////////////
 
-    // Set the preliminary settings
-
+    // What property are we looking for?
     r->sProp = "mass";
+
+    // What is the acronym for this analysis?
     r->sAcro = "amwt";
+
+    // What are the units of the property we're searching for?
     r->sUnit = "GeV";
 
+    // Where is the data? Where is the calibration to be stored/accessed?
     r->dataFileLoc = "./samples/2012_combined.root";
     r->systFileLoc = "./rnally_calibration_19.700000762939453.root";
 
+    // Utility labels - our signal template values, process names, etc.
     r->mcSigTemplVal = { 166.5, 169.5, 171.5, 172.5, 173.5, 175.5, 178.5 };
     r->processes = { "2B_All" };
     r->mcBkgLabels = { "WJets",
@@ -25,16 +41,23 @@ void rnallyDileptonAnalysis()
                        "DrellYan",
                        "Diboson" };
 
-
+    // Set the cuts
     r->maxPropVal = 400;
     r->minPropVal = 100;
-    r->upperCut = 400;
-    r->lowerCut = 100;
-    r->calibLastPts = false;
-    r->nomTemplIndex = 4;
-    r->nPseudoexperiments = 1000;
 
+    // Do not calibrate the endpoints of mcSigTemplVal
+    r->calibLastPts = false;
+
+    // Set the nominal MC template index in mcSigTemplVal
+    r->nomTemplIndex = 4;
+
+    // Set the number of pseudoexperiments to run in the calibration
+    r->nPseudoexperiments = 1000;
     
-    
+    /////////////
+    // Running //
+    /////////////
+
+    // Run the analysis!
     r->run();
 }

@@ -38,7 +38,7 @@ void RPoissonAnalysis::setup() {
     //
     char propValPref[15] = "Reconstructed ";
     propVal = new RooRealVar(sProp.c_str(), strcat(propValPref, sProp.c_str()),
-                             lowerCut, upperCut);
+                             minPropVal, maxPropVal);
     sample  = new RooCategory("sample", "sample") ;
 
     //set types of sample
@@ -80,7 +80,7 @@ void RPoissonAnalysis::setup() {
 
     //
     for (int i = 0; i < processes.size(); ++i) {
-        if (fixedSample) nTotSample.at(i) = datasets[processes.at(i)]->GetEntries();
+        nTotSample.at(i) = datasets[processes.at(i)]->GetEntries();
         cout << " - in "<< processes.at(i) << " " << nTotSample.at(i) << endl;
     }
 
@@ -107,8 +107,11 @@ void RPoissonAnalysis::setup() {
         for (unsigned int iVal = 0; iVal <  mcSigTemplVal.size(); ++iVal) {
 
             // get the histogram for the interaction and propVal we want
-            sprintf(hname, "%s__TTbar_%.1f_%s", sAcro.c_str(), mcSigTemplVal.at(iVal), processes.at(itype).c_str());
-            sprintf(tag  , "%s%.1f"              , processes.at(itype).c_str()   , mcSigTemplVal.at(iVal));
+            sprintf(hname, "%s__%s_%.1f_%s", sAcro.c_str(), sigProcess.c_str(), 
+                                             mcSigTemplVal.at(iVal), 
+                                             processes.at(itype).c_str());
+            sprintf(tag  , "%s%.1f"        , processes.at(itype).c_str(), 
+                                             mcSigTemplVal.at(iVal));
             cout << " - signal template: " << hname << " " << tag << endl;
 
             printf("itype %d iVal %d \n", itype, iVal);
@@ -132,47 +135,40 @@ void RPoissonAnalysis::setup() {
     delete theFile;
 
     // plot the systematics GEN templates if they are available
-    if (systematics) {
-        cout << " - retrieved systematics signal GEN template from " 
-             << dataFileLoc << endl;
-        theFile = new TFile (dataFileLoc.c_str()) ;
+    cout << " - retrieved systematics signal GEN template from " 
+         << dataFileLoc << endl;
+    theFile = new TFile (dataFileLoc.c_str()) ;
 
-        unsigned int maxTemplates;
-        if (systematicsPDF) maxTemplates = 41;                                                      //HARDCODED
-        else maxTemplates = mcSigTemplVal.size();
+    unsigned int maxTemplates;
+    maxTemplates = mcSigTemplVal.size();
 
-        // loop through the propVals
-        for (unsigned int i = 0; i < maxTemplates; ++i){
+    // loop through the propVals
+    for (unsigned int i = 0; i < maxTemplates; ++i){
 
-            float tVal = 0.;
-            if (!systematicsPDF) tVal = mcSigTemplVal.at(i);
+        float tVal = mcSigTemplVal.at(i);
 
-            //loop through the interaction types
-            for (int itype = 0; itype < processes.size(); ++itype) {
-                // get the histogram name
-                if (systematicsPDF) {
-                    sprintf(tag,"%s_pdf%i",processes.at(itype).c_str(),i);
-                    sprintf(hname,"%s__%s_pdf%i", sAcro.c_str(), processes.at(itype).c_str(),i);
-                } else {
-                    sprintf(tag,"%s%.1f",processes.at(itype).c_str(),tVal);
-                    sprintf(hname, "%s__TTbar_%.1f_%s", sAcro.c_str(), tVal, processes.at(itype).c_str());
-                }
+        //loop through the interaction types
+        for (int itype = 0; itype < processes.size(); ++itype) {
+            // get the histogram name
+            sprintf(tag,"%s%.1f",processes.at(itype).c_str(),tVal);
+            sprintf(hname, "%s__%s_%.1f_%s", sAcro.c_str(), sigProcess.c_str(), 
+                                             tVal, processes.at(itype).c_str());
+            
+            // get the histogram and store in mcSigHistos_gen
+            cout << " - signal GEN template "  << processes.at(itype) 
+                 << " " <<i<<" "<< tag <<" "<< hname <<endl;
 
-                // get the histogram and store in mcSigHistos_gen
-                cout << " - signal GEN template "  << processes.at(itype) 
-                     << " " <<i<<" "<< tag <<" "<< hname <<endl;
-
-                //
-                TH1F* histo  = (TH1F*) gDirectory->Get(hname) ;
-                histo->Rebin(5);
-                histo->SetLineColor(4);
-                mcSigTemplHistosScaled_gen[tag] = histo;
-            }
+            //
+            TH1F* histo  = (TH1F*) gDirectory->Get(hname) ;
+            histo->Rebin(5);
+            histo->SetLineColor(4);
+            mcSigTemplHistosScaled_gen[tag] = histo;
         }
-        // cleanup
-        theFile->Close();
-        delete theFile;
     }
+    // cleanup
+    theFile->Close();
+    delete theFile;
+    
 
     // Get the background templates
     cout << " - retrieving background templates\n";
@@ -222,47 +218,44 @@ void RPoissonAnalysis::setup() {
     cout << " - found "<< mcBkgHistosScaled.size() << "background histos\n";
 
     //
-    if (systematics) {
-        //
-        cout << " - retrieving systematics background GEN template from "
-             << dataFileLoc << endl;
-        theFile = new TFile (dataFileLoc.c_str());
+    cout << " - retrieving systematics background GEN template from "
+         << dataFileLoc << endl;
+    theFile = new TFile (dataFileLoc.c_str());
 
-        // iterate through the background MC types
-        for (unsigned int i = 0; i < mcBkgLabels.size(); ++i) {
+    // iterate through the background MC types
+    for (unsigned int i = 0; i < mcBkgLabels.size(); ++i) {
 
-            // iterate through types
-            for (int itype = 0; itype < processes.size(); ++itype) {
-                //format the name of the histo we want to get
-                sprintf(hname, "%s__%s_%s", sAcro.c_str(), mcBkgLabels.at(i).Data(), 
-                        processes.at(itype).c_str());
-                cout << hname << endl;
+        // iterate through types
+        for (int itype = 0; itype < processes.size(); ++itype) {
+            //format the name of the histo we want to get
+            sprintf(hname, "%s__%s_%s", sAcro.c_str(), mcBkgLabels.at(i).Data(), 
+                    processes.at(itype).c_str());
+            cout << hname << endl;
 
-                TH1F* histo  = (TH1F*) gDirectory->Get(hname) ;
-                
-                if (histo == 0) { 
-                    cout << "Histo does not exist\n";
-                    histo = new TH1F(hname, hname, 100, 0, 200);                                    //HARDCODED
-                }
+            TH1F* histo  = (TH1F*) gDirectory->Get(hname) ;
+            
+            if (histo == 0) { 
+                cout << "Histo does not exist\n";
+                histo = new TH1F(hname, hname, 100, 0, 200);                                    //HARDCODED
+            }
 
-                //rebin the histogram and add to the total backgrounds_GEN histogram
-                histo->Rebin(5);
+            //rebin the histogram and add to the total backgrounds_GEN histogram
+            histo->Rebin(5);
 
-                //
-                if (mcTotalBkgHistosScaled_gen.find(processes.at(itype)) 
-                      == mcTotalBkgHistosScaled_gen.end())               {
-                    mcTotalBkgHistosScaled_gen[processes.at(itype)] 
-                       = (TH1F*) histo->Clone("mcTotalBkgHistosScaled_gen");
-                } else {
-                    mcTotalBkgHistosScaled_gen[processes.at(itype)]->Add(histo);
-                }
+            //
+            if (mcTotalBkgHistosScaled_gen.find(processes.at(itype)) 
+                  == mcTotalBkgHistosScaled_gen.end())               {
+                mcTotalBkgHistosScaled_gen[processes.at(itype)] 
+                   = (TH1F*) histo->Clone("mcTotalBkgHistosScaled_gen");
+            } else {
+                mcTotalBkgHistosScaled_gen[processes.at(itype)]->Add(histo);
             }
         }
-
-        // clean up
-        theFile->Close();
-        delete theFile;
     }
+
+    // clean up
+    theFile->Close();
+    delete theFile;
 
     // re-initialize some variables, establish the workspace
     gr         = 0; 
@@ -290,15 +283,14 @@ void RPoissonAnalysis::setup() {
         
         workspace->factory(hname);
 
-        if (systematics) {
-            sprintf(hname,"histo_bck_gen%s",processes.at(itype).c_str());
-            workspace->import(*(new RooDataHist(hname, hname, *propVal, 
-                                                mcTotalBkgHistosScaled_gen[processes.at(itype)])));
+        sprintf(hname,"histo_bck_gen%s",processes.at(itype).c_str());
+        workspace->import(*(new RooDataHist(hname, hname, *propVal, 
+                                            mcTotalBkgHistosScaled_gen[processes.at(itype)])));
 
-            sprintf(hname,"HistPdf::background_gen%s(%s,histo_bck%s)", 
-                    processes.at(itype).c_str(), sProp.c_str(),  processes.at(itype).c_str());
-            workspace->factory(hname);
-        }
+        sprintf(hname,"HistPdf::background_gen%s(%s,histo_bck%s)", 
+                processes.at(itype).c_str(), sProp.c_str(),  processes.at(itype).c_str());
+        workspace->factory(hname);
+
 
         //
         float totalBkg = (float) mcTotalBkgHistosScaled[processes.at(itype)]->Integral();
@@ -336,50 +328,24 @@ void RPoissonAnalysis::setup() {
             //
             workspace->factory(hname);
 
-            if (systematics && !systematicsPDF) {
-                //
-                sprintf(hname, "histo_sgn_gen%s%.1f", processes.at(itype).c_str(), tVal);
-                workspace->import( *(new RooDataHist(hname, hname, *propVal, 
-                                             mcSigTemplHistosScaled_gen[tag])));
-
-                //
-                sprintf(hname,"HistPdf::signal_gen%s%.1f(%s,histo_sgn_gen%s%.1f)",
-                        processes.at(itype).c_str(), tVal, sProp.c_str(), processes.at(itype).c_str(), tVal);
-                workspace->factory(hname);
-            }
+            //
+            sprintf(hname, "histo_sgn_gen%s%.1f", processes.at(itype).c_str(), tVal);
+            workspace->import( *(new RooDataHist(hname, hname, *propVal, 
+                                                 mcSigTemplHistosScaled_gen[tag])));
+            //
+            sprintf(hname,"HistPdf::signal_gen%s%.1f(%s,histo_sgn_gen%s%.1f)",
+                    processes.at(itype).c_str(), tVal, sProp.c_str(), processes.at(itype).c_str(), tVal);
+            workspace->factory(hname);
 
             //
-            if (useRatio) {
-                sprintf(hname,"SUM::model%s%.1f( ratio%s%.1f[0,1]*signal%s%.1f, background%s )",
-                        processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), tVal, 
-                        processes.at(itype).c_str(), tVal, processes.at(itype).c_str());
-            } else {
-                sprintf(hname,"SUM::model%s%.1f( Nsig%s%.1f[0,1000]*signal%s%.1f, nbrBkgEvts%s*background%s )",
-                        processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), tVal, 
-                        processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), 
-                        processes.at(itype).c_str());
-            }
+            sprintf(hname,"SUM::model%s%.1f( ratio%s%.1f[0,1]*signal%s%.1f, background%s )",
+                    processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), tVal, 
+                    processes.at(itype).c_str(), tVal, processes.at(itype).c_str());
 
             cout << hname << endl;
 
             workspace->factory(hname);
         }
-
-        if (systematics && systematicsPDF) {
-            for (int i = 0; i < 41; ++i){                                                           //HARDCODED
-                sprintf(hname,"histo_sgn_gen%s%i",processes.at(itype).c_str(),i);
-                sprintf(tag,"%s_pdf%i",processes.at(itype).c_str(),i);
-                workspace->import( *(new RooDataHist(hname, hname, *propVal, 
-                                             mcSigTemplHistosScaled_gen[tag])));
-
-                sprintf(hname, "HistPdf::signal_gen%s%i(%s,histo_sgn_gen%s%i)",
-                        processes.at(itype).c_str(), i, sProp.c_str(), processes.at(itype).c_str(), i);
-                cout << hname << endl;
-
-                workspace->factory(hname);
-            }
-        }
-
     }
 
     // this is only for the pdf systematics templates:
@@ -401,25 +367,9 @@ void RPoissonAnalysis::setup() {
         workspace->factory(name);
     }
 
-    if (bkgsyst) {
-        char bkgMeanPref[5] = "bkg ";
-        bkgMean     = new RooRealVar("bkgmean" , strcat(bkgMeanPref, sProp.c_str()), 180.);
-        bkgWidth    = new RooRealVar("bkgwidth", "bkg fit width", 20.);
-        bkgHistoPDF = new RooGaussian("background", "background PDF",
-                                      *propVal,*bkgMean,*bkgWidth);
-    }
-
     toyError = 0;
     toyLL    = new TH2F("LL", "LL residuals", 9, minPropVal, maxPropVal,                            //HARDCODED
                         200, -100, 100);                                                            //HARDCODED
-    
-    if (!useRatio) {
-        for (int itype = 0 ; itype < processes.size(); ++itype) {
-            sprintf(hname,"nbrBkgEvts%s", processes.at(itype).c_str());
-            workspace->var(hname)->setVal(mcTotalBkgHistosScaled[processes.at(itype)]->Integral());
-            workspace->var(hname)->setConstant(1);
-        }
-    }
 }
 
 
@@ -472,113 +422,51 @@ int RPoissonAnalysis::generateToy(int templToUse) {
     for (int itype = 0; itype < processes.size(); ++itype) {
 
         delete datasets[processes.at(itype)];
+        
+        sprintf(tag, "%s%.1f", processes.at(itype).c_str(), mcSigTemplVal[nomTemplIndex]);
 
-        if (!fixedSample) {
+        int binLow  = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(minPropVal);
+        int binHigh = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(maxPropVal);
 
-            if (!systematics || !systematicsPDF) 
-                 sprintf(tag, "%s%.1f"  , processes.at(itype).c_str(), mcSigTemplVal[templToUse]);
-            else sprintf(tag, "%s_pdf%i", processes.at(itype).c_str(), templToUse);
+        cout << tag << endl;
+        double sigProb;
 
-            int binLow  = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(lowerCut);
-            int binHigh = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(upperCut);
+        sigProb = mcSigTemplHistosScaled_gen[tag]->Integral(binLow, binHigh) /
+                    (mcSigTemplHistosScaled_gen[tag]->Integral(binLow, binHigh)
+                      + mcTotalBkgHistosScaled_gen[processes.at(itype)]->Integral(binLow, binHigh));
 
-            if (systematics) {
-                n = _random.Poisson((float) mcSigTemplHistosScaled_gen[tag]->Integral(binLow, binHigh));
-            } else {
-                n = _random.Poisson((float) mcSigTemplHistosScaled[tag]->Integral(binLow, binHigh));
-            }
+        n = _random.Binomial(nTotSample[itype], sigProb);
+        cout << "Generate " << n << " " << processes.at(itype) << " signal events of ";
 
-            cout << " - generating "<< n << " " << processes.at(itype) << " signal events of ";
+        cout << sProp  << " " << mcSigTemplVal[templToUse];
+        
+        cout << ", with binomial prob " << sigProb << endl;
+        genSig[processes.at(itype)] = n; 
+        totGenSig += n;
+        genBkg[processes.at(itype)] = nTotSample[itype] - n;
 
-            if (!systematics || !systematicsPDF) cout << sProp  << " " << mcSigTemplVal[templToUse];
-            else                                 cout << "pdf " << templToUse;
-            
-            cout << ", with poisson mean "
-                 << (float) mcSigTemplHistosScaled[tag]->Integral(binLow, binHigh)
-                 << endl;
-
-            genSig[processes.at(itype)] = n; 
-            totGenSig += n;
-
-            if (systematics) {
-                n = _random.Poisson((float) mcTotalBkgHistosScaled_gen[processes.at(itype)]->Integral(binLow, binHigh));
-            } else {
-                n = _random.Poisson((float) mcTotalBkgHistosScaled[processes.at(itype)]->Integral(binLow, binHigh));
-            }
-
-            genBkg[processes.at(itype)] = n; 
-            totGenBkg += n;
-
-            cout << " - generating "<< n << " " << " background events"
-                 << ", with Poisson mean "
-                 << (float) mcTotalBkgHistosScaled[processes.at(itype)]->Integral(binLow, binHigh)
-                 << endl;
-
-        } else {
-            sprintf(tag, "%s%.1f", processes.at(itype).c_str(), mcSigTemplVal[nomTemplIndex]);
-
-            int binLow  = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(lowerCut);
-            int binHigh = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(upperCut);
-
-            cout << tag << endl;
-            double sigProb;
-
-            if (systematics) {
-                if (systematicsPDF) sprintf(tag, "%s_pdf%i", processes.at(itype).c_str(), templToUse);
-                sigProb = mcSigTemplHistosScaled_gen[tag]->Integral(binLow, binHigh) /
-                            (mcSigTemplHistosScaled_gen[tag]->Integral(binLow, binHigh)
-                              + mcTotalBkgHistosScaled_gen[processes.at(itype)]->Integral(binLow, binHigh));
-            } else {
-                sigProb = mcSigTemplHistosScaled[tag]->Integral(binLow, binHigh) /
-                            (mcSigTemplHistosScaled[tag]->Integral(binLow, binHigh)
-                              + mcTotalBkgHistosScaled[processes.at(itype)]->Integral(binLow, binHigh));
-            }
-
-            n = _random.Binomial(nTotSample[itype], sigProb);
-            cout << "Generate " << n << " " << processes.at(itype) << " signal events of ";
-
-            if (!systematics || !systematicsPDF) cout << sProp  << " " << mcSigTemplVal[templToUse];
-            else                                 cout << "pdf " << templToUse;
-            
-            cout << ", with binomial prob " << sigProb << endl;
-            genSig[processes.at(itype)] = n; 
-            totGenSig += n;
-            genBkg[processes.at(itype)] = nTotSample[itype] - n;
-
-            if (genBkg[processes.at(itype)] < 0.){
-                cout << "ERROR: number of background events < 0.\n";
-                assert(false);
-            }
-
-            totGenBkg += genBkg[processes.at(itype)];
-            cout << " - generated " << genBkg[processes.at(itype)] << " " 
-                 << " background events\n";
+        if (genBkg[processes.at(itype)] < 0.){
+            cout << "ERROR: number of background events < 0.\n";
+            assert(false);
         }
 
-        if (systematics) {
-            // EAC EDIT signal_gen
-            if (!systematicsPDF) sprintf(hname,"signal_gen%s%.1f", 
-                                         processes.at(itype).c_str(),
-                                         mcSigTemplVal[templToUse]);
-            else sprintf(hname,"signal_gen%s%i",
-                         processes.at(itype).c_str(), templToUse);
-        } else {
-            sprintf(hname,"signal%s%.1f", processes.at(itype).c_str(),
-                    mcSigTemplVal[templToUse]);
-        }
+        totGenBkg += genBkg[processes.at(itype)];
+        cout << " - generated " << genBkg[processes.at(itype)] << " " 
+             << " background events\n";
+    
 
+        // EAC EDIT signal_gen
+        sprintf(hname,"signal_gen%s%.1f", processes.at(itype).c_str(),
+                                          mcSigTemplVal.at(templToUse));
+        
         cout << hname << endl; 
         datasets[processes.at(itype)] 
             = workspace->pdf(hname)->generateBinned(*propVal, 
                                                     genSig[processes.at(itype)])->createHistogram(hname,*propVal);
         cout << hname << endl;
 
-        if (systematics) {
-            sprintf(hname,"background_gen%s", processes.at(itype).c_str());
-        } else {
-            sprintf(hname,"background%s", processes.at(itype).c_str());
-        }
-
+        sprintf(hname,"background_gen%s", processes.at(itype).c_str());
+        
         datasets[processes.at(itype)]->Add(workspace->pdf(hname)->generateBinned(*propVal, 
                                                                                  genBkg[processes.at(itype)])->createHistogram(hname,*propVal));
     }
@@ -598,10 +486,8 @@ int RPoissonAnalysis::generateToy(int templToUse) {
 void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
     
     // alert the user what is happening
-    if (!systematics || !systematicsPDF) 
-         cout << " - template " << sProp << " value "
-              << mcSigTemplVal.at(iTemplate) << endl;
-    else cout << " - pdf " << iTemplate << endl;
+    cout << " - template " << sProp << " value "
+         << mcSigTemplVal.at(iTemplate) << endl;
 
     // cleanup from any previous runs of doToys
     if (toyError != 0) {
@@ -728,13 +614,7 @@ double RPoissonAnalysis::fitPoint(int index) {
     fittedTempl = index;
 
     // some cleanup
-    if (fitResults)  {
-        delete fitResults;
-
-        if (bkgsyst) {
-            delete pdffit;
-        }
-    }
+    if (fitResults) delete fitResults;
 
     // name of the model we're fitting
     char tName[50];
@@ -745,28 +625,19 @@ double RPoissonAnalysis::fitPoint(int index) {
     pdffit->Print();
 
     //
-    if (useRatio && fixBkg == 3) {
-        char tag[50];
+    char tag[50];
 
+    //
+    for (int itype = 0; itype < processes.size(); ++itype) {
         //
-        for (int itype = 0; itype < processes.size(); ++itype) {
-            //
-            sprintf(tag,"%s%.1f",processes.at(itype).c_str(),mcSigTemplVal.at(index));
-            sprintf(tName,"ratio%s%.1f", processes.at(itype).c_str(), mcSigTemplVal.at(index));
+        sprintf(tag,"%s%.1f",processes.at(itype).c_str(),mcSigTemplVal.at(index));
+        sprintf(tName,"ratio%s%.1f", processes.at(itype).c_str(), mcSigTemplVal.at(index));
 
-            // S/(S+B) significance metric
-            workspace->var(tName)->setVal(mcSigTemplHistosScaled[tag]->Integral()/
-                                  (mcSigTemplHistosScaled[tag]->Integral()
-                                   +mcTotalBkgHistosScaled[processes.at(itype)]->Integral()));
-            workspace->var(tName)->setConstant(1);
-        }
-    } else if (useRatio && fixBkg == 1) {
-        //
-        for (int itype = 0; itype < processes.size(); ++itype) {
-            sprintf(tName,"ratio%s%.1f", processes.at(itype).c_str(), mcSigTemplVal.at(index));
-            workspace->var(tName)->setVal(1.0);
-            workspace->var(tName)->setConstant(1);
-        }
+        // S/(S+B) significance metric
+        workspace->var(tName)->setVal(mcSigTemplHistosScaled[tag]->Integral()/
+                              (mcSigTemplHistosScaled[tag]->Integral()
+                               +mcTotalBkgHistosScaled[processes.at(itype)]->Integral()));
+        workspace->var(tName)->setConstant(1);
     }
 
     // fit the pdf to the analysis data
@@ -1028,8 +899,8 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     char  name[200], 
           hname[50];
     int   minP   = (calibLastPts ? 0 : 1),
-          maxP   = mcSigTemplVal.size() - (calibLastPts ? 1 : 2);
-    int   points = maxP - minP + 1;
+          maxP   = mcSigTemplVal.size() - (calibLastPts ? 0 : 1);
+    int   points = maxP - minP;
     float tMinPVal = mcSigTemplVal.at(minP), 
           tMaxPVal = mcSigTemplVal.at(maxP);
 
@@ -1041,7 +912,7 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
              pullWV(points), pullWErrV(points);
 
     // loop through our min and max points
-    for (int i = minP; i <= maxP; ++i) {
+    for (int i = minP; i < maxP; ++i) {
         float propVal = mcSigTemplVal.at(i);
 
         // collect the calibration histograms for this template
@@ -1261,6 +1132,9 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
 
 
 void RPoissonAnalysis::run() {
+    // TODO: Sort mcSigTemplVal, check everything is in order before running
+    // TODO: Format output!
+
     setup();
 
     fitAll();

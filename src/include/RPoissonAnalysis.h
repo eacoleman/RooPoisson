@@ -37,7 +37,6 @@
 #include "RooSimultaneous.h"
 
 // RooPoisson inclusion
-//#include "RPoissonFitHandler.h"
 
 class RPoissonAnalysis
 {
@@ -59,7 +58,7 @@ class RPoissonAnalysis
 
         void assembleDatasets();
 
-        // Fitting (TODO: Migrate to RPoissonFitHandler)
+        // fitting methods
         double fitPoint(int index);
         int    fitAll();
         pair<double, double> minimize(bool fake, 
@@ -72,9 +71,6 @@ class RPoissonAnalysis
         ///////////////////////
         // Utility variables //
         ///////////////////////
-        
-        //
-        //RPoissonFitHandler *fitHandler;
         TCanvas *c_min;
         
         //
@@ -101,16 +97,16 @@ class RPoissonAnalysis
         /////////////////////////
         // Data and histograms //
         /////////////////////////
-        
+
         map<string, TH1*>   datasets;
         map<string, int>    genSig, genBkg;
 
-        map<string, TH1F *> mcBkgHistosScaled,
+        map<string, TH1F*>  mcBkgHistosScaled,
                             mcTotalBkgHistosScaled,
                             mcTotalBkgHistosScaled_gen,
                             mcSigTemplHistosScaled,
                             mcSigTemplHistosScaled_gen;
-      
+
         TH1F *dataHisto,
              *chi2Result,
              *calibHisto;
@@ -121,7 +117,6 @@ class RPoissonAnalysis
              *toyError,
              *toyPull;
         TH2F *toyLL;
-             
 
         TH1F *templMean,
              *templRMS;
@@ -186,8 +181,9 @@ class RPoissonAnalysis
         float  lLumi   = 19.7;
         string lUnit   = "f";
 
-        // labels for subprocesses, background processes
-        vector<string>  processes = { "E", "EE", "EM", "MM", "M" };
+        // labels for the signal process, subprocesses, background processes
+        TString         sigProcess  =   "TTbar";
+        vector<string>  processes   = { "E", "EE", "EM", "MM", "M" };
         vector<TString> mcBkgLabels = { "SingleTop", 
                                         "WJets", 
                                         "DrellYan", 
@@ -199,36 +195,25 @@ class RPoissonAnalysis
         // Variables to control settings //
         ///////////////////////////////////
        
+        // location of your data files, output calib file
         string dataFileLoc = "./samples/2012_combined_EACMLB.root",
                systFileLoc = "./samples/calibration_19.700000762939453.root";
         
+        // the signal template propVal values
         vector<float> mcSigTemplVal = { 1.50, 3.00, 4.50, 6.00, 7.50 };
         
-        // whether to use systematics, PDF version
-        //
-        bool systematics     = true;
-        bool systematicsPDF  = false;
-        bool useRatio        = true;
-        bool fixedSample     = true;
-        bool bkgSyst         = false;
+        // whether to calibrate min/max of mcSigTemplVal[i]
         bool calibLastPts    = true;
 
         // cut information
-        float upperCut       = 400.;
-        float lowerCut       = 0.;
-        float upperWeightCut = 5000000.;
-        float lowerWeightCut = 5.;
-
         float minPropVal     = 0;
         float maxPropVal     = 10;
         
-        // what is the index of the nominal template
-        // in mcSigTemplVal?
-        int nomTemplIndex    = 0;
-        int nPseudoexperiments = 100;
+        // what is the index of the nominal template in mcSigTemplVal?
+        int nomTemplIndex      = 0;
 
-        // antiquated - consider removing
-        int fixBkg           = 3;
+        // how many pseudoexperiments to perform in the calibration?
+        int nPseudoexperiments = 100;
 
 };
 
