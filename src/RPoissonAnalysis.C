@@ -107,8 +107,8 @@ void RPoissonAnalysis::setup() {
         for (unsigned int iVal = 0; iVal <  mcSigTemplVal.size(); ++iVal) {
 
             // get the histogram for the interaction and propVal we want
-            sprintf(hname, "%s__TTbar_%.2f_%s", sAcro.c_str(), mcSigTemplVal.at(iVal), processes.at(itype).c_str());
-            sprintf(tag  , "%s%.2f"              , processes.at(itype).c_str()   , mcSigTemplVal.at(iVal));
+            sprintf(hname, "%s__TTbar_%.1f_%s", sAcro.c_str(), mcSigTemplVal.at(iVal), processes.at(itype).c_str());
+            sprintf(tag  , "%s%.1f"              , processes.at(itype).c_str()   , mcSigTemplVal.at(iVal));
             cout << " - signal template: " << hname << " " << tag << endl;
 
             printf("itype %d iVal %d \n", itype, iVal);
@@ -154,8 +154,8 @@ void RPoissonAnalysis::setup() {
                     sprintf(tag,"%s_pdf%i",processes.at(itype).c_str(),i);
                     sprintf(hname,"%s__%s_pdf%i", sAcro.c_str(), processes.at(itype).c_str(),i);
                 } else {
-                    sprintf(tag,"%s%.2f",processes.at(itype).c_str(),tVal);
-                    sprintf(hname, "%s__TTbar_%.2f_%s", sAcro.c_str(), tVal, processes.at(itype).c_str());
+                    sprintf(tag,"%s%.1f",processes.at(itype).c_str(),tVal);
+                    sprintf(hname, "%s__TTbar_%.1f_%s", sAcro.c_str(), tVal, processes.at(itype).c_str());
                 }
 
                 // get the histogram and store in mcSigHistos_gen
@@ -320,16 +320,16 @@ void RPoissonAnalysis::setup() {
             cout << " - building "  << processes.at(itype) << " pdf for "
                  << sProp << " " << tVal << endl;
 
-            sprintf(tag, "%s%.2f", processes.at(itype).c_str(), tVal);
+            sprintf(tag, "%s%.1f", processes.at(itype).c_str(), tVal);
 
             //
-            sprintf(tag  , "%s%.2f"         , processes.at(itype).c_str(), tVal);
-            sprintf(hname, "histo_sgn%s%.2f", processes.at(itype).c_str(), tVal);
+            sprintf(tag  , "%s%.1f"         , processes.at(itype).c_str(), tVal);
+            sprintf(hname, "histo_sgn%s%.1f", processes.at(itype).c_str(), tVal);
             cout << hname << " " << tag << endl;
             
             //
             workspace->import( *(new RooDataHist(hname, hname, *propVal, mcSigTemplHistosScaled[tag]) ));
-            sprintf(hname,"HistPdf::signal%s%.2f(%s,histo_sgn%s%.2f)",
+            sprintf(hname,"HistPdf::signal%s%.1f(%s,histo_sgn%s%.1f)",
                     processes.at(itype).c_str(),tVal,sProp.c_str(),processes.at(itype).c_str(),tVal);
             cout << hname << endl;
             
@@ -338,23 +338,23 @@ void RPoissonAnalysis::setup() {
 
             if (systematics && !systematicsPDF) {
                 //
-                sprintf(hname, "histo_sgn_gen%s%.2f", processes.at(itype).c_str(), tVal);
+                sprintf(hname, "histo_sgn_gen%s%.1f", processes.at(itype).c_str(), tVal);
                 workspace->import( *(new RooDataHist(hname, hname, *propVal, 
                                              mcSigTemplHistosScaled_gen[tag])));
 
                 //
-                sprintf(hname,"HistPdf::signal_gen%s%.2f(%s,histo_sgn_gen%s%.2f)",
+                sprintf(hname,"HistPdf::signal_gen%s%.1f(%s,histo_sgn_gen%s%.1f)",
                         processes.at(itype).c_str(), tVal, sProp.c_str(), processes.at(itype).c_str(), tVal);
                 workspace->factory(hname);
             }
 
             //
             if (useRatio) {
-                sprintf(hname,"SUM::model%s%.2f( ratio%s%.2f[0,1]*signal%s%.2f, background%s )",
+                sprintf(hname,"SUM::model%s%.1f( ratio%s%.1f[0,1]*signal%s%.1f, background%s )",
                         processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), tVal, 
                         processes.at(itype).c_str(), tVal, processes.at(itype).c_str());
             } else {
-                sprintf(hname,"SUM::model%s%.2f( Nsig%s%.2f[0,1000]*signal%s%.2f, nbrBkgEvts%s*background%s )",
+                sprintf(hname,"SUM::model%s%.1f( Nsig%s%.1f[0,1000]*signal%s%.1f, nbrBkgEvts%s*background%s )",
                         processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), tVal, 
                         processes.at(itype).c_str(), tVal, processes.at(itype).c_str(), 
                         processes.at(itype).c_str());
@@ -389,9 +389,9 @@ void RPoissonAnalysis::setup() {
         cout << " - building simultaneous pdf for " << sProp << " " 
              << tVal << endl;
 
-        sprintf(name2, "SIMUL::model%.2f(sample", tVal);
+        sprintf(name2, "SIMUL::model%.1f(sample", tVal);
         for (int j = 0; j < processes.size(); ++j) {
-            sprintf(name , "%s,%s=model%s%.2f", name2, processes.at(j).c_str(),
+            sprintf(name , "%s,%s=model%s%.1f", name2, processes.at(j).c_str(),
                     processes.at(j).c_str(), tVal);
             sprintf(name2, "%s", name);
         }
@@ -426,7 +426,7 @@ void RPoissonAnalysis::setup() {
 TH1F* RPoissonAnalysis::getTemplHisto(string process, int iProp) {
     //
     char tag[50];
-    sprintf(tag,"%s%.2f", process.data(), mcSigTemplVal.at(iProp));
+    sprintf(tag,"%s%.1f", process.data(), mcSigTemplVal.at(iProp));
 
     //
     cout << "Template " << sProp << ": " << tag << endl;
@@ -476,7 +476,7 @@ int RPoissonAnalysis::generateToy(int templToUse) {
         if (!fixedSample) {
 
             if (!systematics || !systematicsPDF) 
-                 sprintf(tag, "%s%.2f"  , processes.at(itype).c_str(), mcSigTemplVal[templToUse]);
+                 sprintf(tag, "%s%.1f"  , processes.at(itype).c_str(), mcSigTemplVal[templToUse]);
             else sprintf(tag, "%s_pdf%i", processes.at(itype).c_str(), templToUse);
 
             int binLow  = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(lowerCut);
@@ -515,7 +515,7 @@ int RPoissonAnalysis::generateToy(int templToUse) {
                  << endl;
 
         } else {
-            sprintf(tag, "%s%.2f", processes.at(itype).c_str(), mcSigTemplVal[nomTemplIndex]);
+            sprintf(tag, "%s%.1f", processes.at(itype).c_str(), mcSigTemplVal[nomTemplIndex]);
 
             int binLow  = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(lowerCut);
             int binHigh = mcSigTemplHistosScaled[tag]->GetXaxis()->FindBin(upperCut);
@@ -557,13 +557,13 @@ int RPoissonAnalysis::generateToy(int templToUse) {
 
         if (systematics) {
             // EAC EDIT signal_gen
-            if (!systematicsPDF) sprintf(hname,"signal_gen%s%.2f", 
+            if (!systematicsPDF) sprintf(hname,"signal_gen%s%.1f", 
                                          processes.at(itype).c_str(),
                                          mcSigTemplVal[templToUse]);
             else sprintf(hname,"signal_gen%s%i",
                          processes.at(itype).c_str(), templToUse);
         } else {
-            sprintf(hname,"signal%s%.2f", processes.at(itype).c_str(),
+            sprintf(hname,"signal%s%.1f", processes.at(itype).c_str(),
                     mcSigTemplVal[templToUse]);
         }
 
@@ -624,7 +624,7 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
     toyBias   = new TH1F("bias"  , strcat(sPropPref, " bias"), 100, -3.5, 3.5);                     //HARDCODED
     toyPull   = new TH1F("pull"  , "pull", 200, -10, 10);                                           //HARDCODED
     toyError  = new TH1F("error" , strcat(sPropPref, " uncertainty"), 500, 0, 0.4);                 //HARDCODED
-    toyLL     = new TH2F("LL"    , "LL residuals", 9, -0.5, 8.5, 200, -100, 100);                   //HARDCODED
+    toyLL     = new TH2F("LL"    , "LL residuals", 9, -0.5, 8.5, 200, -100, 100);                   //HARDCODED REDALERT
 
     // histogram styling
     toyMean->GetXaxis()->SetNdivisions(50205);
@@ -738,7 +738,7 @@ double RPoissonAnalysis::fitPoint(int index) {
 
     // name of the model we're fitting
     char tName[50];
-    sprintf(tName,"model%.2f", mcSigTemplVal.at(index));
+    sprintf(tName,"model%.1f", mcSigTemplVal.at(index));
 
     //
     pdffit = workspace->pdf(tName) ;
@@ -751,8 +751,8 @@ double RPoissonAnalysis::fitPoint(int index) {
         //
         for (int itype = 0; itype < processes.size(); ++itype) {
             //
-            sprintf(tag,"%s%.2f",processes.at(itype).c_str(),mcSigTemplVal.at(index));
-            sprintf(tName,"ratio%s%.2f", processes.at(itype).c_str(), mcSigTemplVal.at(index));
+            sprintf(tag,"%s%.1f",processes.at(itype).c_str(),mcSigTemplVal.at(index));
+            sprintf(tName,"ratio%s%.1f", processes.at(itype).c_str(), mcSigTemplVal.at(index));
 
             // S/(S+B) significance metric
             workspace->var(tName)->setVal(mcSigTemplHistosScaled[tag]->Integral()/
@@ -763,7 +763,7 @@ double RPoissonAnalysis::fitPoint(int index) {
     } else if (useRatio && fixBkg == 1) {
         //
         for (int itype = 0; itype < processes.size(); ++itype) {
-            sprintf(tName,"ratio%s%.2f", processes.at(itype).c_str(), mcSigTemplVal.at(index));
+            sprintf(tName,"ratio%s%.1f", processes.at(itype).c_str(), mcSigTemplVal.at(index));
             workspace->var(tName)->setVal(1.0);
             workspace->var(tName)->setConstant(1);
         }
@@ -951,19 +951,19 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
         ++pts;
 
         // write the toy histograms to our output file
-        sprintf(hname,"meanMass_%.2f", mcSigTemplVal.at(i));
+        sprintf(hname,"meanMass_%.1f", mcSigTemplVal.at(i));
         toyMean->Clone(hname)->Write();
 
-        sprintf(hname,"biasMass_%.2f", mcSigTemplVal.at(i));
+        sprintf(hname,"biasMass_%.1f", mcSigTemplVal.at(i));
         toyBias->Clone(hname)->Write();
 
-        sprintf(hname,"errMass_%.2f",  mcSigTemplVal.at(i));
+        sprintf(hname,"errMass_%.1f",  mcSigTemplVal.at(i));
         toyError->Clone(hname)->Write();
 
-        sprintf(hname,"pullMass_%.2f", mcSigTemplVal.at(i));
+        sprintf(hname,"pullMass_%.1f", mcSigTemplVal.at(i));
         toyPull->Clone(hname)->Write();
 
-        sprintf(hname,"LL_%.2f",       mcSigTemplVal.at(i));
+        sprintf(hname,"LL_%.1f",       mcSigTemplVal.at(i));
         toyLL->Clone(hname)->Write();
     }
 
@@ -1045,16 +1045,16 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
         float propVal = mcSigTemplVal.at(i);
 
         // collect the calibration histograms for this template
-        sprintf(hname,"meanMass_%.2f", propVal);
+        sprintf(hname,"meanMass_%.1f", propVal);
         TH1F* toyMean  = (TH1F*) gDirectory->Get(hname);
 
-        sprintf(hname,"biasMass_%.2f", propVal);
+        sprintf(hname,"biasMass_%.1f", propVal);
         TH1F* toyBias  = (TH1F*) gDirectory->Get(hname) ;
 
-        sprintf(hname,"errMass_%.2f", propVal);
+        sprintf(hname,"errMass_%.1f", propVal);
         TH1F* toyError = (TH1F*) gDirectory->Get(hname) ;
 
-        sprintf(hname,"pullMass_%.2f", propVal);
+        sprintf(hname,"pullMass_%.1f", propVal);
         TH1F* toyPull  = (TH1F*) gDirectory->Get(hname) ;
 
         // fit out plots with proper gaussians
@@ -1188,7 +1188,7 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     // save propVal error at nominal
     gStyle->SetOptStat(0);
     gStyle->SetOptFit(kTRUE);
-    sprintf(hname,"errMass_%.2f", nomPVal);
+    sprintf(hname,"errMass_%.1f", nomPVal);
     TH1F* toyErr = (TH1F*) gDirectory->Get(hname);
     cout << "Toy err is "<<toyErr<<endl;
     toyErr->GetXaxis()->SetTitle("Uncertainty [GeV]");
@@ -1196,17 +1196,17 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     toyErr->GetYaxis()->SetTitleOffset(1.4);
     toyErr->Draw();
     TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
-    sprintf(hname,"errMass_%.2f_%s.pdf", nomPVal, tag);
+    sprintf(hname,"errMass_%.1f_%s.pdf", nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"errMass_%.2f_%s.C", nomPVal, tag);
+    sprintf(hname,"errMass_%.1f_%s.C", nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"errMass_%.2f_%s.png", nomPVal, tag);
+    sprintf(hname,"errMass_%.1f_%s.png", nomPVal, tag);
     c_min->Print(hname);
     cout << "Mean uncertainty "<< toyErr->GetMean() << endl;
 
     // save mean propVal at nominal
     gStyle->SetOptFit(1111);
-    sprintf(hname,"meanMass_%.2f", nomPVal);
+    sprintf(hname,"meanMass_%.1f", nomPVal);
     TH1F* toyMean = (TH1F*) gDirectory->Get(hname) ;
     toyMean->Fit("gaus","Q");
     toyMean->GetXaxis()->SetTitle("Mass [GeV]");
@@ -1214,16 +1214,16 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     toyMean->GetYaxis()->SetTitle("Events/bin");
     toyMean->Draw();
     TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
-    sprintf(hname,"meanMass_%.2f_%s.pdf", nomPVal, tag);
+    sprintf(hname,"meanMass_%.1f_%s.pdf", nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"meanMass_%.2f_%s.C", nomPVal, tag);
+    sprintf(hname,"meanMass_%.1f_%s.C", nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"meanMass_%.2f_%s.png", nomPVal, tag);
+    sprintf(hname,"meanMass_%.1f_%s.png", nomPVal, tag);
     c_min->Print(hname);
 
     // save propVal pull at nominal
     gStyle->SetOptFit(1111);
-    sprintf(hname,"pullMass_%.2f", nomPVal);
+    sprintf(hname,"pullMass_%.1f", nomPVal);
     TH1F* toyPull  = (TH1F*) gDirectory->Get(hname) ;
     toyPull->Fit("gaus","Q");
     toyPull->GetXaxis()->SetTitle("Pull");
@@ -1231,11 +1231,11 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     toyPull->GetYaxis()->SetTitleOffset(1.4);
     toyPull->Draw();
     TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
-    sprintf(hname,"pullMass_%.2f_%s.pdf", nomPVal, tag);
+    sprintf(hname,"pullMass_%.1f_%s.pdf", nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"pullMass_%.2f_%s.C", nomPVal, tag);
+    sprintf(hname,"pullMass_%.1f_%s.C", nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"pullMass_%.2f_%s.png", nomPVal, tag);
+    sprintf(hname,"pullMass_%.1f_%s.png", nomPVal, tag);
     c_min->Print(hname);
 
     // calculate final results from fit parameters

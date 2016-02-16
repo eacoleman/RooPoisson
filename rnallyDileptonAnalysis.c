@@ -19,12 +19,19 @@ void rnallyDileptonAnalysis()
     r->systFileLoc = "./rnally_calibration_19.700000762939453.root";
 
     r->mcSigTemplVal = { 166.5, 169.5, 171.5, 172.5, 173.5, 175.5, 178.5 };
-    r->processes = { "2B_All", "1B_All" };
+    r->processes = { "2B_All" };
     r->mcBkgLabels = { "WJets",
                        "SingleTop",
                        "DrellYan",
                        "Diboson" };
 
+
+    r->maxPropVal = 400;
+    r->minPropVal = 100;
+    r->upperCut = 400;
+    r->lowerCut = 100;
+    r->calibLastPts = false;
+    r->nomTemplIndex = 4;
     r->nPseudoexperiments = 1000;
 
     
