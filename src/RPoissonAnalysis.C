@@ -26,8 +26,6 @@ void RPoissonAnalysis::setup() {
     // initialize some helper variables
     nFitTried      = 0;
     nFitFailed     = 0;
-    hFitFailed     = new TH1F("hFitFailed","hFitFailed", 11, minPropVal, maxPropVal);               //HARDCODED
-    hFitFailedDiff = new TH1F("hFitFailedDiff","hFitFailedDiff", 60, -30., 30.);                    //HARDCODED
     fittedTempl    = -1;
 
     nTotSample.resize(processes.size());
@@ -85,7 +83,8 @@ void RPoissonAnalysis::setup() {
     }
 
     //
-    toyDataHisto = new TH1F("toyDataHisto", "toyDataHisto", 40, 0., 400);                           //HARDCODED
+    toyDataHisto = new TH1F("toyDataHisto", "toyDataHisto", floor((maxPropVal - minPropVal)/10),
+                                                            minPropVal, maxPropVal);            //HARDCODED
     toyDataHisto->Reset();
 
     //
@@ -120,7 +119,7 @@ void RPoissonAnalysis::setup() {
 
             if (histo==0) { 
                 cout << "Histo does not exist\n";
-                histo = new TH1F(hname,hname,100,0,200);                                            //HARDCODED
+                histo = new TH1F(hname,hname,100,0,200); 
             }
 
             histo->Rebin(5);
@@ -236,7 +235,7 @@ void RPoissonAnalysis::setup() {
             
             if (histo == 0) { 
                 cout << "Histo does not exist\n";
-                histo = new TH1F(hname, hname, 100, 0, 200);                                    //HARDCODED
+                histo = new TH1F(hname, hname, 100, 0, 200); 
             }
 
             //rebin the histogram and add to the total backgrounds_GEN histogram
@@ -368,8 +367,8 @@ void RPoissonAnalysis::setup() {
     }
 
     toyError = 0;
-    toyLL    = new TH2F("LL", "LL residuals", 9, minPropVal, maxPropVal,                            //HARDCODED
-                        200, -100, 100);                                                            //HARDCODED
+    toyLL    = new TH2F("LL", "LL residuals", 9, -0.5, 8.5,                            //HARDCODED
+                        200, -100, 100);                                               //HARDCODED
 }
 
 
@@ -455,7 +454,6 @@ int RPoissonAnalysis::generateToy(int templToUse) {
              << " background events\n";
     
 
-        // EAC EDIT signal_gen
         sprintf(hname,"signal_gen%s%.1f", processes.at(itype).c_str(),
                                           mcSigTemplVal.at(templToUse));
         
@@ -506,10 +504,10 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
     char * sPropPref = new char[sProp.length()];
     strcpy(sPropPref, sProp.c_str());
     
-    toyMean   = new TH1F("mean"  , sPropPref, 100, minPropVal, maxPropVal);                         //HARDCODED
-    toyBias   = new TH1F("bias"  , strcat(sPropPref, " bias"), 100, -3.5, 3.5);                     //HARDCODED
+    toyMean   = new TH1F("mean"  , sPropPref, 100, propPoint - 2.5, propPoint + 2.5);               //HARDCODED
+    toyBias   = new TH1F("bias"  , strcat(sPropPref, " bias"), 140, -3.5, 3.5);                     //HARDCODED
     toyPull   = new TH1F("pull"  , "pull", 200, -10, 10);                                           //HARDCODED
-    toyError  = new TH1F("error" , strcat(sPropPref, " uncertainty"), 500, 0, 0.4);                 //HARDCODED
+    toyError  = new TH1F("error" , strcat(sPropPref, " uncertainty"), 2000, 0, 0.4);                //HARDCODED
     toyLL     = new TH2F("LL"    , "LL residuals", 9, -0.5, 8.5, 200, -100, 100);                   //HARDCODED REDALERT
 
     // histogram styling
@@ -543,21 +541,21 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
         }
 
         nFitFailed += countFailures;
-        cout << "EAC683" << endl;
-        pair<double,double> result = minimize(true);cout << "EAC684" << endl;
-        if (result.second >= 0.) {cout << "EAC685" << endl;
+        
+        pair<double,double> result = minimize(true);
+        if (result.second >= 0.) {
             cout << " - fake fit result: " << result.first 
                  << " +/- " << result.second << endl;
-            cout << "EAC688" << endl;
+            
             // fill the toy histograms with the result of our pseudoexperiment
-            toyMean->Fill(result.first);cout << "EAC690" << endl;
-            toyBias->Fill(result.first-propPoint);cout << "EAC691" << endl;
-            toyPull->Fill((propPoint-result.first)/result.second);cout << "EAC692" << endl;
-            toyError->Fill(result.second); cout << "EAC693" << endl;
+            toyMean->Fill(result.first);
+            toyBias->Fill(result.first-propPoint);
+            toyPull->Fill((propPoint-result.first)/result.second);
+            toyError->Fill(result.second);
         } else {
             ++nFitFailed;
         }
-        cout << "EAC697" << endl;
+
         ++nFitTried;
     }
 
@@ -657,7 +655,7 @@ int RPoissonAnalysis::fitAll() {
 
     // fit a model for each propVal
     for (int i = 0; i < mcSigTemplVal.size(); ++i) {
-        chiSquared.at(i) = fitPoint(i); cout << "EAC812" << endl;
+        chiSquared.at(i) = fitPoint(i);
         if (std::isinf(chiSquared.at(i)) || std::isnan(chiSquared.at(i))) return 1;
     }
 
@@ -671,15 +669,15 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
     //
     int    pts   = 0;
     double minLL = std::numeric_limits<double>::infinity();   
-    cout << "EAC826 " << chiSquared.size() << endl;
+    
     //
-    for (int i = 0; i < mcSigTemplVal.size(); ++i) { cout << " EAC" << i << endl;
+    for (int i = 0; i < mcSigTemplVal.size(); ++i) {
         if (chiSquared.at(i) >= 0) {
             ++pts;
             minLL = min(chiSquared[i], minLL);
         }
     }
-    cout << "834" << endl;
+    
     //
     TVectorD x(pts), ex(pts),
              y(pts), ey(pts);
@@ -806,12 +804,12 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
     for (i = min; i < max; ++i) {
         cout << "doing toy " << i << endl;
         // get the toy statistics and fit them with a gaussian
-        doToys(numberOfExps, i); cout << "EAC961 " << toyMean->GetEntries() << endl;
-        toyMean->Fit("gaus"); cout << "EAC962" << endl;
+        doToys(numberOfExps, i);
+        toyMean->Fit("gaus");
 
         // store the points for bias plot
         x[pts]  = mcSigTemplVal.at(i); 
-        y[pts]  = toyMean->GetFunction("gaus")->GetParameter(1); cout << "EAC966" << endl;
+        y[pts]  = toyMean->GetFunction("gaus")->GetParameter(1);
 
         // store the point errors for bias plot
         ex[pts] = 0.;
@@ -900,7 +898,7 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
           hname[50];
     int   minP   = (calibLastPts ? 0 : 1),
           maxP   = mcSigTemplVal.size() - (calibLastPts ? 0 : 1);
-    int   points = maxP - minP;
+    int   points = maxP - minP + 1;
     float tMinPVal = mcSigTemplVal.at(minP), 
           tMaxPVal = mcSigTemplVal.at(maxP);
 

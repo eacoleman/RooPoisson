@@ -121,9 +121,6 @@ class RPoissonAnalysis
         TH1F *templMean,
              *templRMS;
 
-        TH1F *hFitFailed,
-             *hFitFailedDiff;
-
         int  nFitFailed = 0,
              nFitTried  = 0;
 
@@ -182,7 +179,7 @@ class RPoissonAnalysis
         string lUnit   = "f";
 
         // labels for the signal process, subprocesses, background processes
-        TString         sigProcess  =   "TTbar";
+        string         sigProcess  =   "TTbar";
         vector<string>  processes   = { "E", "EE", "EM", "MM", "M" };
         vector<TString> mcBkgLabels = { "SingleTop", 
                                         "WJets", 
