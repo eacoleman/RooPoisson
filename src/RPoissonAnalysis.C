@@ -1,8 +1,13 @@
-/*******************************************************************************
-* RPoissonAnalysis.C
-* 
-*
-*******************************************************************************/
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * RPoissonAnalysis.C                                                          *
+ * Author: Evan Coleman, 2016                                                  *
+ *                                                                             *
+ * Purpose: Core class for Poisson likelihood analyses in ROOT.                *
+ * Usage  : RPoissonAnalysis *r = new RPoissonAnalysis();                      *
+ *          r-><Setting to Change> = <Setting>;                                *
+ *          r->run();                                                          *
+ *                                                                             *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // RooPoisson Inclusions
 #include "include/RPoissonAnalysis.h"
@@ -10,9 +15,11 @@
 
 using namespace RooFit;
 
+
 RPoissonAnalysis::RPoissonAnalysis() {
 
 }
+
 
 void RPoissonAnalysis::setup() {
     //
@@ -20,7 +27,7 @@ void RPoissonAnalysis::setup() {
 
     //
     TStyleHandler::setTDRStyle();
-    c_min = new TCanvas("c_min","", 600, 600);                                                      //HARDCODED
+    c_min = new TCanvas("c_min","", canvWid, canvHei);
     TStyleHandler::initStyle(c_min);
 
     // initialize some helper variables
@@ -83,17 +90,14 @@ void RPoissonAnalysis::setup() {
     }
 
     //
-    toyDataHisto = new TH1F("toyDataHisto", "toyDataHisto", floor((maxPropVal - minPropVal)/10),
-                                                            minPropVal, maxPropVal);            //HARDCODED
+    toyDataHisto = new TH1F("toyDataHisto", "toyDataHisto", 
+                            floor((maxPropVal - minPropVal)/toyDataHistoDiv),
+                            minPropVal, maxPropVal);
     toyDataHisto->Reset();
 
     //
     data->fillHistogram(toyDataHisto, *propVal);
     dataHisto = (TH1F*) toyDataHisto->Clone("dataHisto");
-
-    // Get signal propVal templates
-    templMean   = new TH1F("tmean", "Mean of the templates", 50, minPropVal, maxPropVal);           //HARDCODED
-    templRMS    = new TH1F("trms" , "RMS of the templates" , 50, minPropVal, maxPropVal);           //HARDCODED
 
     // open data file
     theFile = new TFile (dataFileLoc.c_str());
@@ -300,7 +304,7 @@ void RPoissonAnalysis::setup() {
 
         //
         nbrBkgEvts[processes.at(itype)] 
-            = new RooRealVar(hname, hname, totalBkg, 0, 10000);                                     //HARDCODED
+            = new RooRealVar(hname, hname, totalBkg, minNumBkg, maxNumBkg);
 
         //
         workspace->import(*nbrBkgEvts[processes.at(itype)]);
@@ -367,8 +371,8 @@ void RPoissonAnalysis::setup() {
     }
 
     toyError = 0;
-    toyLL    = new TH2F("LL", "LL residuals", 9, -0.5, 8.5,                            //HARDCODED
-                        200, -100, 100);                                               //HARDCODED
+    toyLL    = new TH2F("LL", "LL residuals", toyLLResXBin, toyLLResXMin, toyLLResXMax,                     
+                                              toyLLResYBin, toyLLResYMin, toyLLResYMax);
 }
 
 
@@ -385,22 +389,6 @@ TH1F* RPoissonAnalysis::getTemplHisto(string process, int iProp) {
 
 TH1F* RPoissonAnalysis::getBkgHisto(string process) {
     return mcTotalBkgHistosScaled[process.data()];
-}
-
-
-void RPoissonAnalysis::typeTag(char* nameToTag) {
-    char tName[200];
-
-    cout << " - Name to modify is: " << nameToTag << endl;
-
-    for (int j = 0; j < processes.size(); ++j) {
-        sprintf(tName,"%s%s", nameToTag, processes.at(j).c_str());
-
-        if (j<(processes.size()-1)) sprintf(nameToTag,"%s_", tName);
-        else sprintf(nameToTag,"%s", tName);
-    }
-
-    cout << " - New name is: " << nameToTag << endl;
 }
 
 
@@ -504,11 +492,18 @@ void RPoissonAnalysis::doToys(int nExp, int iTemplate) {
     char * sPropPref = new char[sProp.length()];
     strcpy(sPropPref, sProp.c_str());
     
-    toyMean   = new TH1F("mean"  , sPropPref, 100, propPoint - 2.5, propPoint + 2.5);               //HARDCODED
-    toyBias   = new TH1F("bias"  , strcat(sPropPref, " bias"), 140, -3.5, 3.5);                     //HARDCODED
-    toyPull   = new TH1F("pull"  , "pull", 200, -10, 10);                                           //HARDCODED
-    toyError  = new TH1F("error" , strcat(sPropPref, " uncertainty"), 2000, 0, 0.4);                //HARDCODED
-    toyLL     = new TH2F("LL"    , "LL residuals", 9, -0.5, 8.5, 200, -100, 100);                   //HARDCODED REDALERT
+    toyMean   = new TH1F("mean"  , sPropPref, toyMeanBins, 
+                                   propPoint - toyMeanDelt, propPoint + toyMeanDelt);
+    toyBias   = new TH1F("bias"  , strcat(sPropPref, " bias"), toyBiasBins, 
+                                   -abs(toyBiasDelt), abs(toyBiasDelt));
+    toyPull   = new TH1F("pull"  , "pull", toyPullBins, -abs(toyPullDelt), 
+                                   abs(toyPullDelt));
+    toyError  = new TH1F("error" , strcat(sPropPref, " uncertainty"), 
+                                   toyErrorBins, toyErrorMin, toyErrorMax);
+    toyLL     = new TH2F("LL"    , "LL residuals", toyLLResXBin, toyLLResXMin, 
+                                   toyLLResXMax, toyLLResYBin, toyLLResYMin, 
+                                   toyLLResYMax);
+
 
     // histogram styling
     toyMean->GetXaxis()->SetNdivisions(50205);
@@ -691,7 +686,7 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
         if (chiSquared.at(i) >= 0){
             x[pts]  = mcSigTemplVal.at(i);
             y[pts]  = chiSquared.at(i) - minLL;
-            ey[pts] = 9.4;
+            ey[pts] = 9.4;                                                                          //HARDCODED REDALERT
             
             //cout << x[pts] << " " << y[pts] << " " << y[minPt] << endl;
             
@@ -727,14 +722,17 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
     gr = new TGraphErrors(x, y, ex, ey);
     gr->SetName("gr");
     gr->Fit("pol2", "Q", "", mcSigTemplVal.at(min), mcSigTemplVal.at(max));
-    gr->GetXaxis()->SetTitle("mlbwa  m(lb) [GeV]");                                                 //HARDCODED
+    gr->GetXaxis()->SetTitle(TString(sAcro.data()) + TString(sProp.data()) + 
+                             TString("[") + TString(sUnit.data()) + TString("]"));
     gr->GetYaxis()->SetTitle("-log (L/L_{max})");
     gr->GetYaxis()->SetTitleOffset(1.25);
 
     // get useful params from fits
     Double_t a = gr->GetFunction("pol2")->GetParameter(2);
-    if (!fake)
-        fitVal = gr->GetFunction("pol2")->GetMinimumX(minPropVal,maxPropVal);
+    if (!fake) {
+      fitVal = gr->GetFunction("pol2")->GetMinimumX(minPropVal,maxPropVal);
+      fitErr = 1/sqrt(2*a);
+    }
 
     // announce the minimum-likelihood propVal
     cout << " - minimum " << sProp << ": " 
@@ -769,6 +767,10 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
 }
 
 void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
+    // capitalize the first letter of sProp and store it in another string
+    string sPropFirstCap    = sProp.substr(0);
+           sPropFirstCap[0] = std::toUpper(sPropFirstCap[0]);
+
     // keep track of timing
     time_t start, endLoop, end;
     time   (&start);
@@ -797,7 +799,7 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
     cout << name << endl;
 
     // open the outfile
-    TFile * out = new TFile(systFileLoc.c_str(), "RECREATE");
+    TFile * out = new TFile(calibFileLoc.c_str(), "RECREATE");
     cout << " - opened output file with name " << name << endl;
 
     // loop over templates
@@ -820,19 +822,19 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
         ++pts;
 
         // write the toy histograms to our output file
-        sprintf(hname,"meanMass_%.1f", mcSigTemplVal.at(i));
+        sprintf(hname,"mean%s_%.1f", sPropFirstCap.data(), mcSigTemplVal.at(i));
         toyMean->Clone(hname)->Write();
 
-        sprintf(hname,"biasMass_%.1f", mcSigTemplVal.at(i));
+        sprintf(hname,"bias%s_%.1f", sPropFirstCap.data(), mcSigTemplVal.at(i));
         toyBias->Clone(hname)->Write();
 
-        sprintf(hname,"errMass_%.1f",  mcSigTemplVal.at(i));
+        sprintf(hname,"err%s_%.1f" , sPropFirstCap.data(), mcSigTemplVal.at(i));
         toyError->Clone(hname)->Write();
 
-        sprintf(hname,"pullMass_%.1f", mcSigTemplVal.at(i));
+        sprintf(hname,"pull%s_%.1f", sPropFirstCap.data(), mcSigTemplVal.at(i));
         toyPull->Clone(hname)->Write();
 
-        sprintf(hname,"LL_%.1f",       mcSigTemplVal.at(i));
+        sprintf(hname,"LL_%.1f"    , sPropFirstCap.data(), mcSigTemplVal.at(i));
         toyLL->Clone(hname)->Write();
     }
 
@@ -883,16 +885,17 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
 
 
 void RPoissonAnalysis::calibrate(char tag[20] = "") {
-    float fitUnc  = 0.16; // TODO: what is this doing here?                                         //HARDCODED REDALERT
+    float fitUnc  = fitErr;
     float nomPVal = mcSigTemplVal.at(nomTemplIndex);
-    int iPeriod = 4;
+    string sPropFirstCap    = sProp.substr(0);
+           sPropFirstCap[0] = std::toUpper(sPropFirstCap[0]);
 
     // reset and stylize the canvas
-    c_min = new TCanvas("c_min","", 600, 600);                                                      //HARDCODED
+    c_min = new TCanvas("c_min","", canvWid, canvHei);
     TStyleHandler::initStyle(c_min);
 
     // initialize helper variables
-    TFile* theFile = new TFile(systFileLoc.c_str());
+    TFile* theFile = new TFile(calibFileLoc.c_str());
 
     char  name[200], 
           hname[50];
@@ -914,16 +917,16 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
         float propVal = mcSigTemplVal.at(i);
 
         // collect the calibration histograms for this template
-        sprintf(hname,"meanMass_%.1f", propVal);
+        sprintf(hname,"mean%s_%.1f", sPropFirstCap.data(), propVal);
         TH1F* toyMean  = (TH1F*) gDirectory->Get(hname);
 
-        sprintf(hname,"biasMass_%.1f", propVal);
+        sprintf(hname,"bias%s_%.1f", sPropFirstCap.data(), propVal);
         TH1F* toyBias  = (TH1F*) gDirectory->Get(hname) ;
 
-        sprintf(hname,"errMass_%.1f", propVal);
+        sprintf(hname,"err%s_%.1f" , sPropFirstCap.data(), propVal);
         TH1F* toyError = (TH1F*) gDirectory->Get(hname) ;
 
-        sprintf(hname,"pullMass_%.1f", propVal);
+        sprintf(hname,"pull%s_%.1f", sPropFirstCap.data(), propVal);
         TH1F* toyPull  = (TH1F*) gDirectory->Get(hname) ;
 
         // fit out plots with proper gaussians
@@ -940,10 +943,10 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
         pullWV(i)    = toyPull->GetFunction("gaus")->GetParameter(2);
 
         propErrV(i)  = 0.;
-        meanErrV(i)  = toyBias->GetFunction("gaus")->GetParameter(2)/sqrt(1);
-        biasErrV(i)  = toyBias->GetFunction("gaus")->GetParameter(2)/sqrt(1);
-        pullErrV(i)  = toyPull->GetFunction("gaus")->GetParError(1)/sqrt(1);
-        pullWErrV(i) = toyPull->GetFunction("gaus")->GetParError(2)/sqrt(1);
+        meanErrV(i)  = toyBias->GetFunction("gaus")->GetParameter(1)/sqrt(nPseudoexperiments);
+        biasErrV(i)  = toyBias->GetFunction("gaus")->GetParameter(2)/sqrt(nPseudoexperiments);
+        pullErrV(i)  = toyPull->GetFunction("gaus")->GetParError(1)/sqrt(nPseudoexperiments);
+        pullWErrV(i) = toyPull->GetFunction("gaus")->GetParError(2)/sqrt(nPseudoexperiments);
 
         // report this template information
         cout << " _ Template " << sProp << ": " << propVal << endl;
@@ -965,9 +968,11 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     f2->SetParameter(1,1.);
     f2->SetLineColor(4);
     propGraph->GetXaxis()->SetNdivisions(50205);
-    propGraph->GetXaxis()->SetTitle("Generated mass [GeV]");
+    propGraph->GetXaxis()->SetTitle(TString("Generated ") + TString(sProp.data()) + 
+                                    TString(" [") + TString(sUnit.data()) + TString("]"));
     propGraph->GetYaxis()->SetTitleOffset(1.22);
-    propGraph->GetYaxis()->SetTitle("Estimated mass [GeV]");
+    propGraph->GetYaxis()->SetTitle(TString("Estimated ") + TString(sProp.data()) + 
+                                    TString(" [") + TString(sUnit.data()) + TString("]"));
     propGraph->Draw("apz");
     f2->Draw("same");
     TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
@@ -992,9 +997,11 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     pullGraph->SetMinimum(-1);
     pullGraph->SetMaximum(+1);
     pullGraph->GetXaxis()->SetNdivisions(50205);
-    pullGraph->GetXaxis()->SetTitle("Generated mass [GeV]");
+    pullGraph->GetXaxis()->SetTitle(TString("Generated ") + TString(sProp.data()) + 
+                                    TString(" [") + TString(sUnit.data()) + TString("]"));
     pullGraph->GetYaxis()->SetTitleOffset(1.22);
-    pullGraph->GetYaxis()->SetTitle("pull mean [GeV]");
+    pullGraph->GetYaxis()->SetTitle(TString("Pull mean") + 
+                                    TString(" [") + TString(sUnit.data()) + TString("]"));
     pullGraph->Draw("apz");
     f3->Draw("same");
     TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
@@ -1014,7 +1021,8 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     f4->SetLineStyle(2);
     TF1* pullWFit = new TF1("pullWFit","pol0", tMinPVal-10, tMaxPVal+10);
     pullWGraph->GetXaxis()->SetNdivisions(50205);
-    pullWGraph->GetXaxis()->SetTitle("Generated width [GeV]");
+    pullWGraph->GetXaxis()->SetTitle(TString("Generated ") + TString(sProp.data()) + 
+                                     TString(" [") + TString(sUnit.data()) + TString("]"));
     pullWGraph->GetYaxis()->SetTitleOffset(1.22);
     pullWGraph->GetYaxis()->SetTitle("Pull width");
     pullWGraph->SetMinimum(0.75);
@@ -1036,9 +1044,11 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     biasGraph->Fit("biasFit");
     f3->SetLineStyle(2);
     biasGraph->GetXaxis()->SetNdivisions(50205);
-    biasGraph->GetXaxis()->SetTitle("Generated width [GeV]");
+    biasGraph->GetXaxis()->SetTitle(TString("Generated ") + TString(sProp.data()) + 
+                                    TString(" [") + TString(sUnit.data()) + TString("]"));
     biasGraph->GetYaxis()->SetTitleOffset(1.22);
-    biasGraph->GetYaxis()->SetTitle("Bias [GeV]");
+    biasGraph->GetYaxis()->SetTitle(TString("Bias") + TString(" [") + 
+                                    TString(sUnit.data()) + TString("]"));
     biasGraph->SetMinimum(-0.5);
     biasGraph->SetMaximum(+0.5);
     biasGraph->Draw("apz");
@@ -1057,42 +1067,44 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     // save propVal error at nominal
     gStyle->SetOptStat(0);
     gStyle->SetOptFit(kTRUE);
-    sprintf(hname,"errMass_%.1f", nomPVal);
+    sprintf(hname,"err%s_%.1f", sPropFirstCap.data(), nomPVal);
     TH1F* toyErr = (TH1F*) gDirectory->Get(hname);
     cout << "Toy err is "<<toyErr<<endl;
-    toyErr->GetXaxis()->SetTitle("Uncertainty [GeV]");
+    toyErr->GetXaxis()->SetTitle(TString("Uncertainty") + TString(" [") + 
+                                 TString(sUnit.data()) + TString("]"));
     toyErr->GetXaxis()->SetNdivisions(505);
     toyErr->GetYaxis()->SetTitleOffset(1.4);
     toyErr->Draw();
     TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
-    sprintf(hname,"errMass_%.1f_%s.pdf", nomPVal, tag);
+    sprintf(hname,"err%s_%.1f_%s.pdf", sPropFirstCap.data(), nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"errMass_%.1f_%s.C", nomPVal, tag);
+    sprintf(hname,"err%s_%.1f_%s.C"  , sPropFirstCap.data(), nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"errMass_%.1f_%s.png", nomPVal, tag);
+    sprintf(hname,"err%s_%.1f_%s.png", sPropFirstCap.data(), nomPVal, tag);
     c_min->Print(hname);
     cout << "Mean uncertainty "<< toyErr->GetMean() << endl;
 
     // save mean propVal at nominal
     gStyle->SetOptFit(1111);
-    sprintf(hname,"meanMass_%.1f", nomPVal);
+    sprintf(hname,"mean%s_%.1f", sPropFirstCap.data(), nomPVal);
     TH1F* toyMean = (TH1F*) gDirectory->Get(hname) ;
     toyMean->Fit("gaus","Q");
-    toyMean->GetXaxis()->SetTitle("Mass [GeV]");
+    toyMean->GetXaxis()->SetTitle(TString(sPropFirstCap.data()) + TString(" [") + 
+                                  TString(sUnit.data()) + TString("]"));
     toyMean->GetYaxis()->SetTitleOffset(1.2);
     toyMean->GetYaxis()->SetTitle("Events/bin");
     toyMean->Draw();
     TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
-    sprintf(hname,"meanMass_%.1f_%s.pdf", nomPVal, tag);
+    sprintf(hname,"mean%s_%.1f_%s.pdf", sPropFirstCap.data(), nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"meanMass_%.1f_%s.C", nomPVal, tag);
+    sprintf(hname,"mean%s_%.1f_%s.C"  , sPropFirstCap.data(), nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"meanMass_%.1f_%s.png", nomPVal, tag);
+    sprintf(hname,"mean%s_%.1f_%s.png", sPropFirstCap.data(), nomPVal, tag);
     c_min->Print(hname);
 
     // save propVal pull at nominal
     gStyle->SetOptFit(1111);
-    sprintf(hname,"pullMass_%.1f", nomPVal);
+    sprintf(hname,"pull%s_%.1f", sPropFirstCap.data(), nomPVal);
     TH1F* toyPull  = (TH1F*) gDirectory->Get(hname) ;
     toyPull->Fit("gaus","Q");
     toyPull->GetXaxis()->SetTitle("Pull");
@@ -1100,15 +1112,15 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     toyPull->GetYaxis()->SetTitleOffset(1.4);
     toyPull->Draw();
     TStyleHandler::CMS_lumi( c_min, iPeriod, 0 );
-    sprintf(hname,"pullMass_%.1f_%s.pdf", nomPVal, tag);
+    sprintf(hname,"pull%s_%.1f_%s.pdf", sPropFirstCap.data(), nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"pullMass_%.1f_%s.C", nomPVal, tag);
+    sprintf(hname,"pull%s_%.1f_%s.C"  , sPropFirstCap.data(), nomPVal, tag);
     c_min->Print(hname);
-    sprintf(hname,"pullMass_%.1f_%s.png", nomPVal, tag);
+    sprintf(hname,"pull%s_%.1f_%s.png", sPropFirstCap.data(), nomPVal, tag);
     c_min->Print(hname);
 
     // calculate final results from fit parameters
-    cout << " - performing inversion...\n\n";
+    cout << "\n\n - performing inversion...";
     float a = meanFit->GetParameter(1);
     float b = meanFit->GetParameter(0);
     float ae = meanFit->GetParError(1);
@@ -1130,8 +1142,13 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
 
 
 void RPoissonAnalysis::run() {
-    // TODO: Sort mcSigTemplVal, check everything is in order before running
-    // TODO: Format output!
+    // TODO: Check everything is in order before running
+    // BIG TODO: Format output!
+    
+    // some sorting and cleanup before we begin
+    mcSigTemplVal.sort(mcSigTemplVal.begin(), mcSigTemplVal.begin() + mcSigTemplVal.size());
+    std::tolower(sProp);
+    std::tolower(sAcro);
 
     setup();
 
@@ -1140,9 +1157,4 @@ void RPoissonAnalysis::run() {
 
     getCalibration(nPseudoexperiments);
     calibrate();
-}
-
-
-void RPoissonAnalysis::save(char* outFileName) {
-
 }

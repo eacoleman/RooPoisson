@@ -54,6 +54,22 @@ void rnallyDileptonAnalysis()
     // Set the number of pseudoexperiments to run in the calibration
     r->nPseudoexperiments = 1000;
     
+    // Plot binnings
+    //  - bins = # bins to use in histogram/graph
+    //  - delt = delta(x) to plot about the value of interest
+    //  - min  = minimum value for axis
+    //  - max  = maximum value for axis
+    int   toyMeanBins  =  100;
+    float toyMeanDelt  =  2.5;
+    int   toyBiasBins  =  100;
+    float toyBiasDelt  =  2.5;
+    int   toyPullBins  =  100;
+    float toyPullDelt  =   5.;
+    
+    int   toyErrorBins =  500;
+    float toyErrorMin  =  0.1;
+    float toyErrorMax  =  0.2;
+
     /////////////
     // Running //
     /////////////

@@ -1,7 +1,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * TStyleHandler.C                                                             *
  * Author: Evan Coleman                                                        *
- *         2015                                                                *
+ *         2016                                                                *
  *                                                                             *
  * Purpose:                                                                    *
  *   Handles all style formatting. Includes standard                           *
