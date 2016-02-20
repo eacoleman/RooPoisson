@@ -31,7 +31,7 @@ void rnallyDileptonAnalysis()
 
     // Where is the data? Where is the calibration to be stored/accessed?
     r->dataFileLoc = "./samples/2012_combined.root";
-    r->systFileLoc = "./rnally_calibration_19.700000762939453.root";
+    r->calibFileLoc = "./samples/rnally_calibration_19.700000762939453.root";
 
     // Utility labels - our signal template values, process names, etc.
     r->mcSigTemplVal = { 166.5, 169.5, 171.5, 172.5, 173.5, 175.5, 178.5 };

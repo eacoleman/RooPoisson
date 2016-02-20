@@ -66,7 +66,7 @@ class RPoissonAnalysis
 
         // methods to retrieve and apply the bias correction
         void getCalibration(int numberOfExps = 1000);
-        void calibrate(char tag[20]);
+        void calibrate();
 
         ///////////////////////
         // Utility variables //

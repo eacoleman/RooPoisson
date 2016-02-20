@@ -769,7 +769,7 @@ pair<double,double> RPoissonAnalysis::minimize(bool fake,
 void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
     // capitalize the first letter of sProp and store it in another string
     string sPropFirstCap    = sProp.substr(0);
-           sPropFirstCap[0] = std::toUpper(sPropFirstCap[0]);
+           sPropFirstCap[0] = toupper(sPropFirstCap[0]);
 
     // keep track of timing
     time_t start, endLoop, end;
@@ -792,19 +792,11 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
     int i;
     char hname[50];
 
-    // set the name of the outfile (TODO: abstract)
-    TString name = TString("calibration_");
-    name += lLumi;
-    name.ReplaceAll ( " " , "" );
-    cout << name << endl;
-
     // open the outfile
     TFile * out = new TFile(calibFileLoc.c_str(), "RECREATE");
-    cout << " - opened output file with name " << name << endl;
 
     // loop over templates
     for (i = min; i < max; ++i) {
-        cout << "doing toy " << i << endl;
         // get the toy statistics and fit them with a gaussian
         doToys(numberOfExps, i);
         toyMean->Fit("gaus");
@@ -834,7 +826,7 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
         sprintf(hname,"pull%s_%.1f", sPropFirstCap.data(), mcSigTemplVal.at(i));
         toyPull->Clone(hname)->Write();
 
-        sprintf(hname,"LL_%.1f"    , sPropFirstCap.data(), mcSigTemplVal.at(i));
+        sprintf(hname,"LL_%.1f"    , mcSigTemplVal.at(i));
         toyLL->Clone(hname)->Write();
     }
 
@@ -884,11 +876,12 @@ void RPoissonAnalysis::getCalibration(int numberOfExps = 1000) {
 }
 
 
-void RPoissonAnalysis::calibrate(char tag[20] = "") {
+void RPoissonAnalysis::calibrate() {
+    char  tag[20] = "";
     float fitUnc  = fitErr;
     float nomPVal = mcSigTemplVal.at(nomTemplIndex);
     string sPropFirstCap    = sProp.substr(0);
-           sPropFirstCap[0] = std::toUpper(sPropFirstCap[0]);
+           sPropFirstCap[0] = toupper(sPropFirstCap[0]);
 
     // reset and stylize the canvas
     c_min = new TCanvas("c_min","", canvWid, canvHei);
@@ -900,8 +893,10 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
     char  name[200], 
           hname[50];
     int   minP   = (calibLastPts ? 0 : 1),
-          maxP   = mcSigTemplVal.size() - (calibLastPts ? 0 : 1);
+          maxP   = mcSigTemplVal.size() - (calibLastPts ? 1 : 2);
     int   points = maxP - minP + 1;
+
+    cout << points << " " << minP << " " << maxP << endl;
     float tMinPVal = mcSigTemplVal.at(minP), 
           tMaxPVal = mcSigTemplVal.at(maxP);
 
@@ -913,8 +908,8 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
              pullWV(points), pullWErrV(points);
 
     // loop through our min and max points
-    for (int i = minP; i < maxP; ++i) {
-        float propVal = mcSigTemplVal.at(i);
+    for (int i = 0; i <= maxP - minP; ++i) {
+        float propVal = mcSigTemplVal.at(i+minP);
 
         // collect the calibration histograms for this template
         sprintf(hname,"mean%s_%.1f", sPropFirstCap.data(), propVal);
@@ -928,6 +923,8 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
 
         sprintf(hname,"pull%s_%.1f", sPropFirstCap.data(), propVal);
         TH1F* toyPull  = (TH1F*) gDirectory->Get(hname) ;
+
+        if(propVal == 0 || toyPull == 0 || toyMean == 0 || toyBias == 0 || toyError == 0) assert(false);
 
         // fit out plots with proper gaussians
         toyMean->Fit("gaus","Q");
@@ -943,7 +940,7 @@ void RPoissonAnalysis::calibrate(char tag[20] = "") {
         pullWV(i)    = toyPull->GetFunction("gaus")->GetParameter(2);
 
         propErrV(i)  = 0.;
-        meanErrV(i)  = toyBias->GetFunction("gaus")->GetParameter(1)/sqrt(nPseudoexperiments);
+        meanErrV(i)  = toyBias->GetFunction("gaus")->GetParameter(2)/sqrt(nPseudoexperiments);
         biasErrV(i)  = toyBias->GetFunction("gaus")->GetParameter(2)/sqrt(nPseudoexperiments);
         pullErrV(i)  = toyPull->GetFunction("gaus")->GetParError(1)/sqrt(nPseudoexperiments);
         pullWErrV(i) = toyPull->GetFunction("gaus")->GetParError(2)/sqrt(nPseudoexperiments);
@@ -1146,9 +1143,9 @@ void RPoissonAnalysis::run() {
     // BIG TODO: Format output!
     
     // some sorting and cleanup before we begin
-    mcSigTemplVal.sort(mcSigTemplVal.begin(), mcSigTemplVal.begin() + mcSigTemplVal.size());
-    std::tolower(sProp);
-    std::tolower(sAcro);
+    sort(mcSigTemplVal.begin(), mcSigTemplVal.begin() + mcSigTemplVal.size());
+    transform(sProp.begin(), sProp.end(), sProp.begin(), ::tolower);
+    transform(sAcro.begin(), sAcro.end(), sAcro.begin(), ::tolower);
 
     setup();
 
